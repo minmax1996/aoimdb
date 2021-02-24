@@ -1,0 +1,17 @@
+syntax = "proto3";
+option go_package = "api/proto/message";
+
+service CommandHandler {
+  rpc HandleCommand(CommandRequest) returns (CommandResponse);
+  rpc UseDatabase(CommandRequest) returns (CommandResponse);
+}
+
+message CommandRequest {
+  string query = 1;
+  string param = 2;
+}
+
+message CommandResponse {
+  string query = 1;
+  string param = 2;
+}
