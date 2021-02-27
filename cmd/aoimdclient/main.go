@@ -1,32 +1,67 @@
 package main
 
 import (
-	"bytes"
+	"bufio"
+	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
+	"net"
+	"os"
 
 	"github.com/minmax1996/aoimdb/logger"
-	"golang.org/x/net/http2"
+)
+
+var (
+	username   string
+	password   string
+	connection net.Conn
+	reader     *bufio.Reader
+	writer     *bufio.Writer
 )
 
 func main() {
+	username = "admin"
+	password = "admin"
 	logger.Info("This is EntryPoint for client with default settings")
-	client := &http.Client{}
 
-	// Use the proper transport in the client
-	client.Transport = &http2.Transport{}
+	conn, err := net.Dial("tcp", ":5000")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// Perform the request
-	resp, err := client.Post("https://localhost:9191/hello/sayHello", "text/plain", bytes.NewBufferString("Hello Go!"))
-	if err != nil {
-		log.Fatalf("Failed get: %s", err)
+	connection = conn
+	reader = bufio.NewReader(connection)
+	writer = bufio.NewWriter(connection)
+	if err := authWithCredetials(username, password); err != nil {
+		log.Fatal(err)
 	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalf("Failed reading response body: %s", err)
+
+	go startListenResponses()
+	commandreader := bufio.NewReader(os.Stdin)
+	for {
+		command, _ := commandreader.ReadString('\n')
+		writer.WriteString(command)
+		writer.Flush()
 	}
-	fmt.Printf("Got response %d: %s %s", resp.StatusCode, resp.Proto, string(body))
+}
+
+func startListenResponses() {
+	for {
+		data, _ := reader.ReadString('\n')
+		fmt.Println(data)
+	}
+}
+
+func authWithCredetials(username, password string) error {
+	writer.WriteString(fmt.Sprintf("auth> %s %s\n", username, password))
+	writer.Flush()
+	data, err := reader.ReadString('\n')
+	if err != nil {
+		return err
+	}
+
+	if data != "authenticated" {
+		return errors.New("not authenticated")
+	}
+	return nil
 }

@@ -1,50 +1,67 @@
 package main
 
 import (
-	"context"
-	"log"
 	"net"
 
-	m "github.com/minmax1996/aoimdb/api/proto/message"
 	"github.com/minmax1996/aoimdb/internal/aoidb"
 	"github.com/minmax1996/aoimdb/logger"
-	"google.golang.org/grpc"
 )
 
-var databases map[string]*aoidb.Database
+var (
+	databases map[string]*aoidb.Database
+	server    *Chat
+	errChan   chan error
+)
 
 func init() {
 	databases = make(map[string]*aoidb.Database)
+	server = CreateChat()
+	errChan = make(chan error)
 }
 
 const (
 	port = ":50051"
 )
 
-// server is used to implement helloworld.GreeterServer.
-type server struct {
-	m.UnimplementedMessangerServer
-}
+func startListenForUnprotectedTCP(errChan chan error) error {
+	logger.Info("Starting listening for connections...")
 
-// SendMessage implements helloworld.GreeterServer
-func (s *server) SendMessage(ctx context.Context, in *m.DefaultMessage) (*m.DefaultMessage, error) {
-	logger.InfoFormat("Received: %v", in.GetQuery())
-	return &m.DefaultMessage{
-		Query: in.GetQuery() + ": Response",
-	}, nil
+	listener, err := net.Listen("tcp", ":5000")
+	if err != nil {
+		logger.Error(err)
+		return err
+	}
+
+	go func(ec chan error) {
+		for { // listen for connections
+			conn, err := listener.Accept()
+			if err != nil {
+				logger.Error(err)
+				ec <- err
+				continue
+			}
+			logger.Info("Connected")
+			server.Connect(conn)
+		}
+	}(errChan)
+
+	return nil
 }
 
 func main() {
 	logger.Info("This is EntryPoint for database service")
 	databases["default"] = aoidb.NewDatabase("default")
 	logger.Info(databases["default"])
-	lis, err := net.Listen("tcp", port)
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+
+	if err := startListenForUnprotectedTCP(errChan); err != nil {
+		logger.Fatal(err)
+		return
 	}
-	s := grpc.NewServer()
-	m.RegisterMessangerServer(s, &server{})
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+
+	for {
+		select {
+		case err := <-errChan:
+			logger.Error(err)
+		}
 	}
 }
