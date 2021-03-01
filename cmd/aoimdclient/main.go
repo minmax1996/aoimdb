@@ -28,6 +28,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer conn.Close()
 
 	connection = conn
 	reader = bufio.NewReader(connection)
@@ -59,7 +60,7 @@ func authWithCredetials(username, password string) error {
 	if err != nil {
 		return err
 	}
-
+	logger.Info("auth response: " + data)
 	if data != "authenticated" {
 		return errors.New("not authenticated")
 	}

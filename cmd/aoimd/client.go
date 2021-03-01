@@ -53,7 +53,7 @@ func (client *Client) Write() {
 			break
 		default:
 			msg := <-client.outgoing
-			client.writer.WriteString(msg)
+			client.writer.WriteString(msg + "\n")
 			client.writer.Flush()
 		}
 	}
@@ -71,10 +71,15 @@ func (client *Client) Read() {
 			break
 		}
 		switch {
-		case strings.HasPrefix(msg, "/name>"):
-			name := strings.TrimSpace(strings.SplitAfter(msg, ">")[1])
-			client.name = name
-			client.incoming <- fmt.Sprintf("\x1b[0;32m+ %s connected\033[0m\n", name)
+		case strings.HasPrefix(msg, "auth>"):
+			userpass := strings.Split(strings.TrimSpace(strings.SplitAfter(msg, "> ")[1]), " ")
+			if userpass[0] == "admin" && userpass[1] == "pass" {
+				client.outgoing <- "authenticated"
+			} else {
+				client.status = 0
+				client.disconnect <- true
+				client.conn.Close()
+			}
 		default:
 			logger.Info(msg)
 			client.incoming <- fmt.Sprintf("%s: %s", client.name, msg)
