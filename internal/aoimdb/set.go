@@ -1,4 +1,6 @@
-package aoidb
+package aoimdb
+
+import "errors"
 
 //Set hset
 type Set struct {
@@ -21,10 +23,15 @@ func NewSet() *Set {
 
 // Set : set key v1
 func (hs *Set) Set(key string, value interface{}) error {
+	hs.cache[key] = value
 	return nil
 }
 
 // Get : get key
 func (hs *Set) Get(key string) (interface{}, error) {
-	return nil, nil
+	val, ok := hs.cache[key]
+	if !ok {
+		return nil, errors.New("element with this name not found")
+	}
+	return val, nil
 }

@@ -21,10 +21,10 @@ var (
 
 func main() {
 	username = "admin"
-	password = "admin"
+	password = "pass"
 	logger.Info("This is EntryPoint for client with default settings")
 
-	conn, err := net.Dial("tcp", ":5000")
+	conn, err := net.Dial("tcp", ":1593")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -40,28 +40,36 @@ func main() {
 	go startListenResponses()
 	commandreader := bufio.NewReader(os.Stdin)
 	for {
-		command, _ := commandreader.ReadString('\n')
+		command, err := commandreader.ReadString('\n')
+		if err != nil {
+			os.Exit(1)
+			break
+		}
 		writer.WriteString(command)
 		writer.Flush()
 	}
+	os.Exit(0)
 }
 
 func startListenResponses() {
 	for {
-		data, _ := reader.ReadString('\n')
-		fmt.Println(data)
+		data, err := reader.ReadString('\n')
+		if err != nil {
+			os.Exit(1)
+		}
+		fmt.Println("<" + data)
 	}
 }
 
 func authWithCredetials(username, password string) error {
-	writer.WriteString(fmt.Sprintf("auth> %s %s\n", username, password))
+	writer.WriteString(fmt.Sprintf("auth %s %s\n", username, password))
 	writer.Flush()
 	data, err := reader.ReadString('\n')
 	if err != nil {
 		return err
 	}
 	logger.Info("auth response: " + data)
-	if data != "authenticated" {
+	if data != "authenticated\n" {
 		return errors.New("not authenticated")
 	}
 	return nil

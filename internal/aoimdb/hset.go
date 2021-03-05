@@ -1,4 +1,4 @@
-package aoidb
+package aoimdb
 
 //HSet hset
 type HSet struct {
