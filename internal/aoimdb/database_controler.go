@@ -9,13 +9,34 @@ import (
 // DatabaseController Database structure
 type DatabaseController struct {
 	databases map[string]*Database
+	users     *Set
 }
 
 // NewDatabaseController database constructir
 func NewDatabaseController() *DatabaseController {
 	return &DatabaseController{
 		databases: make(map[string]*Database),
+		users:     NewSet(),
 	}
+}
+
+//AuthentificateByUserPass v
+func (dbc *DatabaseController) AuthentificateByUserPass(user, pass string) error {
+	val, err := dbc.users.Get(user)
+	if err != nil {
+		return err
+	}
+
+	if val.(string) != pass {
+		return errors.New("pass not equals")
+	}
+
+	return nil
+}
+
+//AddUser AddUser
+func (dbc *DatabaseController) AddUser(user, pass string) error {
+	return dbc.users.Set(user, pass)
 }
 
 // SelectDatabase SelectDatabase

@@ -16,6 +16,7 @@ var (
 func init() {
 	errChan = make(chan error)
 	databases = aoimdb.NewDatabaseController()
+	databases.AddUser("admin", "pass")
 }
 
 const (

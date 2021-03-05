@@ -69,6 +69,7 @@ func (client *Client) Write() {
 }
 
 // Read reads message from the client.
+//TODO commands with sample checks for args, auth and etc
 func (client *Client) Read() {
 	for {
 		msg, err := client.reader.ReadString('\n')
@@ -85,12 +86,15 @@ func (client *Client) Read() {
 
 		switch cmd := args[0]; {
 		case cmd == "auth":
-			if len(args) == 3 && args[1] == "admin" && args[2] == "pass" {
-				client.outgoing <- "authenticated"
-				client.SessionData.authenticated = true
-			} else {
-				client.outgoing <- "not authenticated"
+			if len(args) == 3 {
+				if err := client.serverRef.DatabaseController.AuthentificateByUserPass(args[1], args[2]); err == nil {
+					client.outgoing <- "authenticated"
+					client.SessionData.authenticated = true
+					continue
+				}
 			}
+			client.outgoing <- "not authenticated"
+
 		case cmd == "select" && client.SessionData.authenticated:
 			if len(args) != 2 {
 				client.outgoing <- "not enought args to call"
