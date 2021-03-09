@@ -35,37 +35,27 @@ func CreateClient(conn net.Conn, server *TCPServer) *Client {
 	reader := bufio.NewReader(conn)
 
 	client := &Client{
-		conn:        conn,
-		writer:      writer,
-		outgoing:    make(chan string),
-		reader:      reader,
-		incoming:    make(chan string),
-		stop:        make(chan bool),
+		conn:   conn,
+		writer: writer,
+		//outgoing:    make(chan string),
+		reader:   reader,
+		incoming: make(chan string),
+		// stop:        make(chan bool),
 		serverRef:   server,
 		SessionData: SessionData{},
 	}
 
-	go client.Write()
+	//go client.Write()
 	go client.Read()
 
 	return client
 }
 
 // Write writes message to the client.
-func (client *Client) Write() {
-	for {
-		select {
-		case <-client.stop:
-			logger.Info("Stop Writing gouroutine")
-			client.serverRef.disconnect <- client
-			break
-		default:
-			msg := <-client.outgoing
-			logger.Info("send: " + msg)
-			client.writer.WriteString(msg + "\n")
-			client.writer.Flush()
-		}
-	}
+func (client *Client) Write(msg string) {
+	logger.Info("send: " + msg)
+	client.writer.WriteString(msg + "\n")
+	client.writer.Flush()
 }
 
 // Read reads message from the client.
@@ -80,78 +70,82 @@ func (client *Client) Read() {
 		}
 		args := strings.Split(strings.TrimSpace(msg), " ")
 		if len(args) == 0 {
-			client.outgoing <- "empty request"
+			client.Write("empty request")
 			continue
 		}
+		//comm:= commands.GetCommand(args[0])
+		//comm.ValidateArgs(args[1:])
+		//message, error := comm.CallWithArgs(args[1:])
+		//client.Write( message or error
 
 		switch cmd := args[0]; {
 		case cmd == "auth":
 			if len(args) == 3 {
 				if err := client.serverRef.DatabaseController.AuthentificateByUserPass(args[1], args[2]); err == nil {
-					client.outgoing <- "authenticated"
+					client.Write("authenticated")
 					client.SessionData.authenticated = true
 					continue
 				}
 			}
-			client.outgoing <- "not authenticated"
+			client.Write("not authenticated")
 
 		case cmd == "select" && client.SessionData.authenticated:
 			if len(args) != 2 {
-				client.outgoing <- "not enought args to call"
+				client.Write("not enought args to call")
 				continue
 			}
 			client.SessionData.selectedDatabase = args[1]
 			client.serverRef.DatabaseController.SelectDatabase(args[1])
-			client.outgoing <- "selected " + args[1]
+			client.Write("selected " + args[1])
 		case cmd == "get" && client.SessionData.authenticated:
 			if len(args) != 2 {
-				client.outgoing <- "not enought args to call"
+				client.Write("not enought args to call")
 				continue
 			}
 
 			if len(client.SessionData.selectedDatabase) == 0 {
-				client.outgoing <- "database not selected"
+				client.Write("database not selected")
 				continue
 			}
 
 			val, err := client.serverRef.DatabaseController.Get(client.SessionData.selectedDatabase, args[1])
 			if err != nil {
-				client.outgoing <- err.Error()
+				client.Write(err.Error())
 			} else {
-				client.outgoing <- val.(string)
+				client.Write(val.(string))
 			}
 		case cmd == "set" && client.SessionData.authenticated:
 			if len(args) != 3 {
-				client.outgoing <- "not enought args to call"
+				client.Write("not enought args to call")
 				continue
 			}
 
 			if len(client.SessionData.selectedDatabase) == 0 {
-				client.outgoing <- "database not selected"
+				client.Write("database not selected")
 				continue
 			}
 
 			err := client.serverRef.DatabaseController.Set(client.SessionData.selectedDatabase, args[1], args[2])
 			if err != nil {
-				client.outgoing <- err.Error()
+				client.Write(err.Error())
 			} else {
-				client.outgoing <- "1"
+				client.Write("1")
 			}
 		case cmd == "exit":
-			client.outgoing <- "Bye"
+			client.Write("Bye")
 			client.Disconnect()
 			logger.Info("stop read goroutine")
 			return
 		case !client.SessionData.authenticated:
-			client.outgoing <- "not authenticated"
+			client.Write("not authenticated")
 		default:
-			client.outgoing <- "unknown command"
+			client.Write("unknown command")
 		}
 	}
 }
 
 // Disconnect Disconnect
 func (client *Client) Disconnect() {
-	client.stop <- true
+	client.serverRef.disconnect <- client
 	client.conn.Close()
 }
