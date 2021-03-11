@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/csv"
 	"errors"
 	"fmt"
 	"log"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/minmax1996/aoimdb/api/commands"
 	"github.com/minmax1996/aoimdb/logger"
+	"github.com/olekukonko/tablewriter"
 )
 
 var (
@@ -47,6 +49,7 @@ func Send(name string, s ...string) error {
 
 func main() {
 	var err error
+
 	username = "admin"
 	password = "pass"
 
@@ -89,7 +92,13 @@ func startListenResponses() {
 		if err != nil {
 			os.Exit(1)
 		}
-		fmt.Println("<" + data)
+
+		table, err := tablewriter.NewCSVReader(os.Stdout, csv.NewReader(strings.NewReader(data)), false)
+		if err != nil {
+			os.Exit(1)
+		}
+		table.Render()
+		fmt.Print("<" + data)
 	}
 }
 

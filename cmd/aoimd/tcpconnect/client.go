@@ -52,9 +52,14 @@ func CreateClient(conn net.Conn, server *TCPServer) *Client {
 }
 
 // Write writes message to the client.
-func (client *Client) Write(msg string) {
-	logger.Info("send: " + msg)
-	client.writer.WriteString(msg + "\n")
+func (client *Client) Write(msg interface{}) {
+	var stringMsg string
+	switch msg.(type) {
+	case string:
+		stringMsg = msg.(string)
+	}
+	logger.Info("send: " + stringMsg)
+	client.writer.WriteString(stringMsg + "\n")
 	client.writer.Flush()
 }
 
