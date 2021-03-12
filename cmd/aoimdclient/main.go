@@ -92,13 +92,16 @@ func startListenResponses() {
 		if err != nil {
 			os.Exit(1)
 		}
-
-		table, err := tablewriter.NewCSVReader(os.Stdout, csv.NewReader(strings.NewReader(data)), false)
-		if err != nil {
-			os.Exit(1)
+		if strings.HasPrefix(data, "csv>") {
+			table, err := tablewriter.NewCSVReader(os.Stdout, csv.NewReader(strings.NewReader(strings.Replace(data, "csv>", "", 1))), false)
+			if err != nil {
+				logger.Error(err.Error())
+				continue
+			}
+			table.Render()
+		} else {
+			fmt.Print("< " + data)
 		}
-		table.Render()
-		fmt.Print("<" + data)
 	}
 }
 

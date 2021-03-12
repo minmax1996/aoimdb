@@ -2,6 +2,8 @@ package tcpconnect
 
 import (
 	"bufio"
+	"errors"
+	"fmt"
 	"net"
 	"strings"
 
@@ -57,6 +59,10 @@ func (client *Client) Write(msg interface{}) {
 	switch msg.(type) {
 	case string:
 		stringMsg = msg.(string)
+	case []string:
+		stringMsg = fmt.Sprintf("csv>%s,%s", msg.([]string)[0], msg.([]string)[1])
+	case error:
+		stringMsg = fmt.Sprintf("err>%s", msg.(error).Error())
 	}
 	logger.Info("send: " + stringMsg)
 	client.writer.WriteString(stringMsg + "\n")
@@ -75,7 +81,7 @@ func (client *Client) Read() {
 		}
 		args := strings.Split(strings.TrimSpace(msg), " ")
 		if len(args) == 0 {
-			client.Write("empty request")
+			client.Write(errors.New("empty request"))
 			continue
 		}
 		//comm:= commands.GetCommand(args[0])
@@ -96,7 +102,7 @@ func (client *Client) Read() {
 
 		case cmd == "select" && client.SessionData.authenticated:
 			if len(args) != 2 {
-				client.Write("not enought args to call")
+				client.Write(errors.New("not enought args to call"))
 				continue
 			}
 			client.SessionData.selectedDatabase = args[1]
@@ -104,37 +110,52 @@ func (client *Client) Read() {
 			client.Write("selected " + args[1])
 		case cmd == "get" && client.SessionData.authenticated:
 			if len(args) != 2 {
-				client.Write("not enought args to call")
+				client.Write(errors.New("not enought args to call"))
 				continue
 			}
 
-			if len(client.SessionData.selectedDatabase) == 0 {
-				client.Write("database not selected")
+			selectedDatabase := client.SessionData.selectedDatabase
+			key := args[1]
+			if strings.Contains(args[1], ".") {
+				splited := strings.Split(args[1], ".")
+				selectedDatabase, key = splited[0], strings.Join(splited[1:], "")
+			}
+
+			if len(selectedDatabase) == 0 {
+				client.Write(errors.New("database not selected"))
 				continue
 			}
 
-			val, err := client.serverRef.DatabaseController.Get(client.SessionData.selectedDatabase, args[1])
+			val, err := client.serverRef.DatabaseController.Get(selectedDatabase, key)
 			if err != nil {
-				client.Write(err.Error())
+				client.Write(err)
 			} else {
-				client.Write(val.(string))
+				client.Write([]string{key, val.(string)})
 			}
 		case cmd == "set" && client.SessionData.authenticated:
 			if len(args) != 3 {
-				client.Write("not enought args to call")
+				client.Write(errors.New("not enought args to call"))
 				continue
 			}
 
-			if len(client.SessionData.selectedDatabase) == 0 {
-				client.Write("database not selected")
+			selectedDatabase := client.SessionData.selectedDatabase
+			key := args[1]
+			value := args[2]
+			if strings.Contains(args[1], ".") {
+				splited := strings.Split(args[1], ".")
+				selectedDatabase, key = splited[0], splited[1]
+			}
+
+			if len(selectedDatabase) == 0 {
+				client.Write(errors.New("database not selected"))
 				continue
 			}
 
-			err := client.serverRef.DatabaseController.Set(client.SessionData.selectedDatabase, args[1], args[2])
+			err := client.serverRef.DatabaseController.Set(selectedDatabase, key, value)
 			if err != nil {
-				client.Write(err.Error())
+				client.Write(err)
 			} else {
-				client.Write("1")
+				client.Write("ok")
 			}
 		case cmd == "exit":
 			client.Write("Bye")
