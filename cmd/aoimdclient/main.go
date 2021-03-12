@@ -4,20 +4,21 @@ import (
 	"bufio"
 	"encoding/csv"
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"net"
 	"os"
 	"strings"
+	"syscall"
 
 	"github.com/minmax1996/aoimdb/api/commands"
 	"github.com/minmax1996/aoimdb/logger"
 	"github.com/olekukonko/tablewriter"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 var (
-	username   string
-	password   string
 	connection net.Conn
 	reader     *bufio.Reader
 	writer     *bufio.Writer
@@ -40,11 +41,7 @@ func Send(name string, s ...string) error {
 func main() {
 	var err error
 
-	username = "admin"
-	password = "pass"
-
-	//shows help command
-	commands.GetCommand("help").CallWithArgs()
+	//try auth by username and password
 
 	//Open tcp connect to base port
 	connection, err = net.Dial("tcp", ":1593")
@@ -56,12 +53,41 @@ func main() {
 	//initiate reader and writer for connection
 	reader = bufio.NewReader(connection)
 	writer = bufio.NewWriter(connection)
-
-	//try auth by username and password
-	//TODO split by args later to do autho auth if userpass (or something else) provided
-	commands.GetCommand("auth").CallWithArgs(username, password)
-
 	go startListenResponses()
+
+	if err := handleAuthenticate(); err != nil {
+		logger.Error("err in authenticate: " + err.Error())
+	}
+
+	//shows help command
+	commands.GetCommand("help").CallWithArgs()
+
+	startListenCommands()
+	os.Exit(0)
+}
+
+func handleAuthenticate() error {
+	var username, password string
+
+	flag.StringVar(&username, "u", "", "a string var")
+	flag.StringVar(&password, "p", "", "a string var")
+	flag.Parse()
+
+	if len(username) > 0 && len(password) > 0 {
+		fmt.Println("[Warning] Using a password on the command line interface can be insecure.")
+		return commands.GetCommand("auth").CallWithArgs(username, password)
+	} else if len(username) > 0 && len(password) == 0 {
+		fmt.Print("Enter password: ")
+		pass, err := terminal.ReadPassword(int(syscall.Stdin))
+		if err != nil {
+			return err
+		}
+		return commands.GetCommand("auth").CallWithArgs(username, string(pass))
+	}
+	return nil
+}
+
+func startListenCommands() {
 	commandreader := bufio.NewReader(os.Stdin)
 	for {
 		command, err := commandreader.ReadString('\n')
@@ -73,7 +99,6 @@ func main() {
 			logger.Error(err.Error())
 		}
 	}
-	os.Exit(0)
 }
 
 func startListenResponses() {
