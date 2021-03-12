@@ -9,14 +9,12 @@ import (
 )
 
 var (
-	databases *aoimdb.DatabaseController
-	errChan   chan error
+	errChan chan error
 )
 
 func init() {
 	errChan = make(chan error)
-	databases = aoimdb.NewDatabaseController()
-	databases.AddUser("admin", "pass")
+	aoimdb.DatabaseInstance.AddUser("admin", "pass")
 }
 
 const (
@@ -24,7 +22,7 @@ const (
 )
 
 func startListenForUnprotectedTCP(errChan chan error) error {
-	server := tcpconnect.CreateTCPServer(databases)
+	server := tcpconnect.CreateTCPServer()
 	listener, err := net.Listen("tcp", tcpPort)
 	if err != nil {
 		logger.Error(err)

@@ -6,6 +6,9 @@ import (
 	"github.com/minmax1996/aoimdb/logger"
 )
 
+//DatabaseInstance to easy access to database from any part of program
+var DatabaseInstance *DatabaseController
+
 // DatabaseController Database structure
 type DatabaseController struct {
 	databases map[string]*Database
@@ -18,6 +21,10 @@ func NewDatabaseController() *DatabaseController {
 		databases: make(map[string]*Database),
 		users:     NewSet(),
 	}
+}
+
+func init() {
+	DatabaseInstance = NewDatabaseController()
 }
 
 //AuthentificateByUserPass v

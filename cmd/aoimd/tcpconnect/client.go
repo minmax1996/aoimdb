@@ -7,6 +7,7 @@ import (
 	"net"
 	"strings"
 
+	db "github.com/minmax1996/aoimdb/internal/aoimdb"
 	"github.com/minmax1996/aoimdb/logger"
 )
 
@@ -88,11 +89,10 @@ func (client *Client) Read() {
 		//comm.ValidateArgs(args[1:])
 		//message, error := comm.CallWithArgs(args[1:])
 		//client.Write( message or error
-
 		switch cmd := args[0]; {
 		case cmd == "auth":
 			if len(args) == 3 {
-				if err := client.serverRef.DatabaseController.AuthentificateByUserPass(args[1], args[2]); err == nil {
+				if err := db.DatabaseInstance.AuthentificateByUserPass(args[1], args[2]); err == nil {
 					client.Write("authenticated")
 					client.SessionData.authenticated = true
 					continue
@@ -106,7 +106,7 @@ func (client *Client) Read() {
 				continue
 			}
 			client.SessionData.selectedDatabase = args[1]
-			client.serverRef.DatabaseController.SelectDatabase(args[1])
+			db.DatabaseInstance.SelectDatabase(args[1])
 			client.Write("selected " + args[1])
 		case cmd == "get" && client.SessionData.authenticated:
 			if len(args) != 2 {
@@ -126,7 +126,7 @@ func (client *Client) Read() {
 				continue
 			}
 
-			val, err := client.serverRef.DatabaseController.Get(selectedDatabase, key)
+			val, err := db.DatabaseInstance.Get(selectedDatabase, key)
 			if err != nil {
 				client.Write(err)
 			} else {
@@ -151,7 +151,7 @@ func (client *Client) Read() {
 				continue
 			}
 
-			err := client.serverRef.DatabaseController.Set(selectedDatabase, key, value)
+			err := db.DatabaseInstance.Set(selectedDatabase, key, value)
 			if err != nil {
 				client.Write(err)
 			} else {

@@ -3,25 +3,22 @@ package tcpconnect
 import (
 	"net"
 
-	"github.com/minmax1996/aoimdb/internal/aoimdb"
 	"github.com/minmax1996/aoimdb/logger"
 )
 
 //TCPServer struct
 type TCPServer struct {
-	clients            []*Client
-	connect            chan net.Conn
-	disconnect         chan *Client
-	DatabaseController *aoimdb.DatabaseController
+	clients    []*Client
+	connect    chan net.Conn
+	disconnect chan *Client
 }
 
 // CreateTCPServer creates new server and starts listening for connections.
-func CreateTCPServer(db *aoimdb.DatabaseController) *TCPServer {
+func CreateTCPServer() *TCPServer {
 	ser := &TCPServer{
-		clients:            make([]*Client, 0),
-		connect:            make(chan net.Conn),
-		disconnect:         make(chan *Client),
-		DatabaseController: db,
+		clients:    make([]*Client, 0),
+		connect:    make(chan net.Conn),
+		disconnect: make(chan *Client),
 	}
 
 	ser.Listen()
