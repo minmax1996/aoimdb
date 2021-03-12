@@ -24,21 +24,11 @@ var (
 )
 
 func init() {
-	commands.RegisterCommand(commands.NewBaseCommand("auth", 3, 3,
-		"auth database command",
-		Send))
-	commands.RegisterCommand(commands.NewBaseCommand("select", 2, 2,
-		"select database command",
-		Send))
-	commands.RegisterCommand(commands.NewBaseCommand("get", 2, 2,
-		"get command",
-		Send))
-	commands.RegisterCommand(commands.NewBaseCommand("set", 3, 3,
-		"set database command",
-		Send))
-	commands.RegisterCommand(commands.NewBaseCommand("exit", 1, 1,
-		"exits from server",
-		Send))
+	commands.RegisterCommand(commands.NewAuthCommand(Send))
+	commands.RegisterCommand(commands.NewSelectCommand(Send))
+	commands.RegisterCommand(commands.NewGetCommand(Send))
+	commands.RegisterCommand(commands.NewSetCommand(Send))
+	commands.RegisterCommand(commands.NewExitCommand(Send))
 }
 
 //Send sends command string to establised connection

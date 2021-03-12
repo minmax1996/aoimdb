@@ -6,16 +6,18 @@ import "errors"
 type BaseCommand struct {
 	name         string
 	desc         string
+	example      string
 	minArgsCount int
 	maxArgsCount int
 	callback     func(string, ...string) error
 }
 
 //NewBaseCommand constructor for private fields
-func NewBaseCommand(name string, minArgsCount, maxArgsCount int, desc string, callback func(string, ...string) error) *BaseCommand {
+func NewBaseCommand(name string, minArgsCount, maxArgsCount int, desc, example string, callback func(string, ...string) error) *BaseCommand {
 	return &BaseCommand{
 		name:         name,
 		desc:         desc,
+		example:      example,
 		minArgsCount: minArgsCount,
 		maxArgsCount: maxArgsCount,
 		callback:     callback,
@@ -30,6 +32,11 @@ func (bc BaseCommand) Name() string {
 //ShowDescription returns description associated with command
 func (bc BaseCommand) ShowDescription() string {
 	return bc.desc
+}
+
+//ShowExample returns example of use this command
+func (bc BaseCommand) ShowExample() string {
+	return bc.example
 }
 
 //ValidateUserInput validates args for this command, in base command only checks for count args
