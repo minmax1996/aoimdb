@@ -3,6 +3,7 @@ package tcpconnect
 import (
 	"net"
 
+	"github.com/minmax1996/aoimdb/api/commands"
 	"github.com/minmax1996/aoimdb/logger"
 )
 
@@ -20,6 +21,12 @@ func CreateTCPServer() *TCPServer {
 		connect:    make(chan net.Conn),
 		disconnect: make(chan *Client),
 	}
+
+	commands.RegisterCommand(commands.NewAuthCommand(nil))
+	commands.RegisterCommand(commands.NewSelectCommand(nil))
+	commands.RegisterCommand(commands.NewGetCommand(nil))
+	commands.RegisterCommand(commands.NewSetCommand(nil))
+	commands.RegisterCommand(commands.NewExitCommand(nil))
 
 	ser.Listen()
 

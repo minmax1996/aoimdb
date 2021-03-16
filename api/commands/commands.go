@@ -1,7 +1,9 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 )
 
 //Commander interface for command from userInput and for server parse
@@ -19,8 +21,22 @@ func init() {
 	RegisterCommand(NewHelpCommand())
 }
 
+func ParseCommand(input string, sep string) (Commander, []string, error) {
+	uArr := strings.Split(input, sep)
+	command := GetCommand(uArr[0])
+	if command == nil {
+		return nil, nil, errors.New("unknown command")
+	}
+
+	if err := command.ValidateUserInput(uArr); err != nil {
+		return nil, nil, err
+	}
+
+	return command, uArr[1:], nil
+}
+
 //NewAuthCommand constructor standart server commands
-func NewAuthCommand(callback func(string, ...string) error) *BaseCommand {
+func NewAuthCommand(callback func(string, ...string) error) Commander {
 	return NewBaseCommand("auth", 3, 3,
 		"auth database command",
 		"(Usage: auth user pass)",
@@ -28,7 +44,7 @@ func NewAuthCommand(callback func(string, ...string) error) *BaseCommand {
 }
 
 //NewSelectCommand constructor standart server commands
-func NewSelectCommand(callback func(string, ...string) error) *BaseCommand {
+func NewSelectCommand(callback func(string, ...string) error) Commander {
 	return NewBaseCommand("select", 2, 2,
 		"select database command",
 		"(Usage: select <database_name>)",
@@ -36,7 +52,7 @@ func NewSelectCommand(callback func(string, ...string) error) *BaseCommand {
 }
 
 //NewGetCommand constructor standart server commands
-func NewGetCommand(callback func(string, ...string) error) *BaseCommand {
+func NewGetCommand(callback func(string, ...string) error) Commander {
 	return NewBaseCommand("get", 2, 2,
 		"get command",
 		"(Usage: get [<databasename>.]<key>)",
@@ -44,7 +60,7 @@ func NewGetCommand(callback func(string, ...string) error) *BaseCommand {
 }
 
 //NewSetCommand constructor standart server commands
-func NewSetCommand(callback func(string, ...string) error) *BaseCommand {
+func NewSetCommand(callback func(string, ...string) error) Commander {
 	return NewBaseCommand("set", 3, 3,
 		"set database command",
 		"(Usage: set [<databasename>.]<key> <value>)",
@@ -52,14 +68,14 @@ func NewSetCommand(callback func(string, ...string) error) *BaseCommand {
 }
 
 //NewExitCommand constructor standart server commands
-func NewExitCommand(callback func(string, ...string) error) *BaseCommand {
+func NewExitCommand(callback func(string, ...string) error) Commander {
 	return NewBaseCommand("exit", 1, 1,
 		"exits from server", "",
 		callback)
 }
 
 //NewHelpCommand constructor standart server commands
-func NewHelpCommand() *BaseCommand {
+func NewHelpCommand() Commander {
 	return NewBaseCommand("help", 1, 2,
 		"shows this message", "",
 		showAllCommands)

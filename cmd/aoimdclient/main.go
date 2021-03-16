@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"encoding/csv"
-	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -121,14 +120,9 @@ func startListenResponses() {
 }
 
 func parseUserInput(userInput string) error {
-	uArr := strings.Split(userInput, " ")
-	command := commands.GetCommand(uArr[0])
-	if command == nil {
-		return errors.New("unknown command")
-	}
-
-	if err := command.ValidateUserInput(uArr); err != nil {
+	command, args, err := commands.ParseCommand(userInput, " ")
+	if err != nil {
 		return err
 	}
-	return command.CallWithArgs(uArr[1:]...)
+	return command.CallWithArgs(args...)
 }

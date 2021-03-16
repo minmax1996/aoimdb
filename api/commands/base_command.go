@@ -39,7 +39,7 @@ func (bc BaseCommand) ShowExample() string {
 	return bc.example
 }
 
-//ValidateUserInput validates args for this command, in base command only checks for count args
+//ValidateUserInput validates args for this command, in base command only checks for count (args including name)
 func (bc BaseCommand) ValidateUserInput(args []string) error {
 	if bc.minArgsCount <= len(args) && len(args) <= bc.maxArgsCount {
 		return nil
