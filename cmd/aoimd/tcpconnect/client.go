@@ -2,12 +2,13 @@ package tcpconnect
 
 import (
 	"bufio"
-	"fmt"
 	"net"
 	"strings"
 
 	"github.com/minmax1996/aoimdb/api/commands"
+	"github.com/minmax1996/aoimdb/api/msg_protocol"
 	"github.com/minmax1996/aoimdb/logger"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 // Client struct
@@ -51,19 +52,29 @@ func CreateClient(conn net.Conn, server *TCPServer) *Client {
 	return client
 }
 
+// WriteError wrapper around Write to write only error
+func (client *Client) WriteError(err error) {
+	client.Write(&msg_protocol.MsgPackRootMessage{Error: err})
+}
+
 // Write writes message to the client.
-func (client *Client) Write(msg interface{}) {
-	var stringMsg string
-	switch msg.(type) {
-	case string:
-		stringMsg = msg.(string)
-	case []string:
-		stringMsg = fmt.Sprintf("csv>%s,%s", msg.([]string)[0], msg.([]string)[1])
-	case error:
-		stringMsg = fmt.Sprintf("err>%s", msg.(error).Error())
+func (client *Client) Write(msg *msg_protocol.MsgPackRootMessage) {
+	//var stringMsg string
+	// switch msg.(type) {
+	// case string:
+	// 	stringMsg = msg.(string)
+	// case []string:
+	// 	stringMsg = fmt.Sprintf("csv>%s,%s", msg.([]string)[0], msg.([]string)[1])
+	// case error:
+	// 	stringMsg = fmt.Sprintf("err>%s", msg.(error).Error())
+	// }
+	// logger.Info("send: " + stringMsg)
+
+	b, err := msgpack.Marshal(msg)
+	if err != nil {
+		panic(err)
 	}
-	logger.Info("send: " + stringMsg)
-	client.writer.WriteString(stringMsg + "\n")
+	client.writer.WriteString(string(b) + "\n")
 	client.writer.Flush()
 }
 
@@ -80,12 +91,12 @@ func (client *Client) Read() {
 
 		command, args, err := commands.ParseCommand(strings.TrimSpace(msg), " ")
 		if err != nil {
-			client.Write(err)
+			client.WriteError(err)
 			continue
 		}
 
 		if err := client.Handle(command, args); err != nil {
-			client.Write(err)
+			client.WriteError(err)
 			continue
 		}
 	}

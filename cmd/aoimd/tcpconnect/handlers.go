@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/minmax1996/aoimdb/api/commands"
+	"github.com/minmax1996/aoimdb/api/msg_protocol"
 	db "github.com/minmax1996/aoimdb/internal/aoimdb"
 	"github.com/minmax1996/aoimdb/logger"
 )
@@ -35,7 +36,11 @@ func (c *Client) AuthHandler(s ...string) error {
 		return err
 	}
 
-	c.Write("authenticated")
+	c.Write(&msg_protocol.MsgPackRootMessage{
+		AuthResponse: &msg_protocol.AuthResponse{
+			Message: "authenticated",
+		},
+	})
 	c.SessionData.authenticated = true
 	return nil
 }
@@ -44,7 +49,12 @@ func (c *Client) AuthHandler(s ...string) error {
 func (c *Client) SelectHandler(s ...string) error {
 	c.SessionData.selectedDatabase = s[0]
 	db.DatabaseInstance.SelectDatabase(s[0])
-	c.Write("selected " + s[0])
+
+	c.Write(&msg_protocol.MsgPackRootMessage{
+		SelectResponse: &msg_protocol.SelectResponse{
+			SelectedDatabase: s[0],
+		},
+	})
 	return nil
 }
 
@@ -66,7 +76,12 @@ func (c *Client) GetHandler(s ...string) error {
 		return err
 	}
 
-	c.Write([]string{key, val.(string)})
+	c.Write(&msg_protocol.MsgPackRootMessage{
+		GetResponse: &msg_protocol.GetResponse{
+			Key:   key,
+			Value: val,
+		},
+	})
 	return nil
 }
 
@@ -89,13 +104,19 @@ func (c *Client) SetHandler(s ...string) error {
 		return err
 	}
 
-	c.Write("ok")
+	c.Write(&msg_protocol.MsgPackRootMessage{
+		SetResponse: &msg_protocol.SetResponse{
+			Message: "ok",
+		},
+	})
 	return nil
 }
 
 //Send sends command string to establised connection
 func (c *Client) ExitHandler(s ...string) error {
-	c.Write("Bye")
+	c.Write(&msg_protocol.MsgPackRootMessage{
+		Message: "Bye",
+	})
 	c.Disconnect()
 	logger.Info("stop read goroutine")
 	return nil

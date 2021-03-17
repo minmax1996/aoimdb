@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"encoding/csv"
 	"flag"
 	"fmt"
 	"log"
@@ -12,8 +11,9 @@ import (
 	"syscall"
 
 	"github.com/minmax1996/aoimdb/api/commands"
+	"github.com/minmax1996/aoimdb/api/msg_protocol"
 	"github.com/minmax1996/aoimdb/logger"
-	"github.com/olekukonko/tablewriter"
+	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -106,16 +106,42 @@ func startListenResponses() {
 		if err != nil {
 			os.Exit(1)
 		}
-		if strings.HasPrefix(data, "csv>") {
-			table, err := tablewriter.NewCSVReader(os.Stdout, csv.NewReader(strings.NewReader(strings.Replace(data, "csv>", "", 1))), false)
-			if err != nil {
-				logger.Error(err.Error())
-				continue
-			}
-			table.Render()
-		} else {
-			fmt.Print("< " + data)
+
+		var item msg_protocol.MsgPackRootMessage
+		err = msgpack.Unmarshal([]byte(data), &item)
+		if err != nil {
+			logger.Error(err.Error())
+			continue
 		}
+
+		if item.Error != nil {
+			fmt.Println("ERR " + item.Error.Error())
+			continue
+		}
+
+		switch {
+		case item.AuthResponse != nil:
+			fmt.Println(*item.AuthResponse)
+		case item.SelectResponse != nil:
+			fmt.Println(*item.SelectResponse)
+		case item.GetResponse != nil:
+			fmt.Println(*item.GetResponse)
+		case item.SetResponse != nil:
+			fmt.Println(*item.SetResponse)
+		default:
+			fmt.Println(item.Message)
+		}
+
+		// if strings.HasPrefix(item.Message, "csv>") {
+		// 	table, err := tablewriter.NewCSVReader(os.Stdout, csv.NewReader(strings.NewReader(strings.Replace(item.Message, "csv>", "", 1))), false)
+		// 	if err != nil {
+		// 		logger.Error(err.Error())
+		// 		continue
+		// 	}
+		// 	table.Render()
+		// } else {
+		// 	fmt.Print("< " + item.Message)
+		// }
 	}
 }
 
