@@ -52,8 +52,11 @@ func main() {
 	//initiate reader and writer for connection
 	reader = bufio.NewReader(connection)
 	writer = bufio.NewWriter(connection)
+
+	//start goroutine to listen responses from connection
 	go startListenResponses()
 
+	// try to authenticate user if credentials provided, otherwise user can authenticate by himself later
 	if err := handleAuthenticate(); err != nil {
 		logger.Error("err in authenticate: " + err.Error())
 	}
@@ -68,8 +71,8 @@ func main() {
 func handleAuthenticate() error {
 	var username, password string
 
-	flag.StringVar(&username, "u", "", "a string var")
-	flag.StringVar(&password, "p", "", "a string var")
+	flag.StringVar(&username, "u", "", "a string var for username")
+	flag.StringVar(&password, "p", "", "a string var for password")
 	flag.Parse()
 
 	if len(username) > 0 && len(password) > 0 {
@@ -83,19 +86,28 @@ func handleAuthenticate() error {
 		}
 		return commands.GetCommand("auth").CallWithArgs(username, string(pass))
 	}
+	fmt.Println("[Warning] You are not authenticated, please authenticate by typing command 'auth user pass'.")
+	fmt.Println("Or you can use flags '-u=user' and promt pass or '-u=user -p=pass' but it cant be insecure.")
 	return nil
 }
 
 func startListenCommands() {
 	commandreader := bufio.NewReader(os.Stdin)
 	for {
-		command, err := commandreader.ReadString('\n')
+		userInput, err := commandreader.ReadString('\n')
 		if err != nil {
 			break
 		}
-		//parse userInput to find command and invoke its callback
-		if err := parseUserInput(strings.TrimSpace(command)); err != nil {
+
+		command, args, err := commands.ParseCommand(strings.TrimSpace(userInput), " ")
+		if err != nil {
 			logger.Error(err.Error())
+			continue
+		}
+
+		if err := command.CallWithArgs(args...); err != nil {
+			logger.Error(err.Error())
+			continue
 		}
 	}
 }
@@ -143,12 +155,4 @@ func startListenResponses() {
 		// 	fmt.Print("< " + item.Message)
 		// }
 	}
-}
-
-func parseUserInput(userInput string) error {
-	command, args, err := commands.ParseCommand(userInput, " ")
-	if err != nil {
-		return err
-	}
-	return command.CallWithArgs(args...)
 }

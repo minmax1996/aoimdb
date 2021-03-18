@@ -21,6 +21,22 @@ func init() {
 	RegisterCommand(NewHelpCommand())
 }
 
+//RegisterCommand appends commander object to collection registered commands for help and other
+func RegisterCommand(commander Commander) {
+	commanders = append(commanders, commander)
+}
+
+//GetCommand gets command by name or returns nil if not found
+func GetCommand(name string) Commander {
+	for _, v := range commanders {
+		if v.Name() == name {
+			return v
+		}
+	}
+	return nil
+}
+
+//ParseCommand parse userInput to Commander and validate args, and return them
 func ParseCommand(input string, sep string) (Commander, []string, error) {
 	uArr := strings.Split(input, sep)
 	command := GetCommand(uArr[0])
@@ -81,21 +97,7 @@ func NewHelpCommand() Commander {
 		showAllCommands)
 }
 
-//RegisterCommand appends commander object to collection registered commands for help and other
-func RegisterCommand(commander Commander) {
-	commanders = append(commanders, commander)
-}
-
-//GetCommand gets command by name or returns nil if not found
-func GetCommand(name string) Commander {
-	for _, v := range commanders {
-		if v.Name() == name {
-			return v
-		}
-	}
-	return nil
-}
-
+//showAllCommands used for HelpCommand to print all registered commands (or selected one if pass its name to args)
 func showAllCommands(name string, args ...string) error {
 	if len(args) == 0 {
 		result := "Usage:\n<command> <args>\n\nCommands:\n"

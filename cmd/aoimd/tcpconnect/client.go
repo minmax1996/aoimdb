@@ -72,14 +72,14 @@ func (client *Client) Write(msg *msg_protocol.MsgPackRootMessage) {
 
 	b, err := msgpack.Marshal(msg)
 	if err != nil {
-		panic(err)
+		logger.Warn(err.Error())
+		return
 	}
 	client.writer.WriteString(string(b) + "\n")
 	client.writer.Flush()
 }
 
 // Read reads message from the client.
-//TODO commands with sample checks for args, auth and etc
 func (client *Client) Read() {
 	for {
 		msg, err := client.reader.ReadString('\n')
