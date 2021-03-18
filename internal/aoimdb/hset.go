@@ -2,7 +2,7 @@ package aoimdb
 
 //HSet hset
 type HSet struct {
-	cache map[string]map[string]interface{}
+	Cache map[string]map[string]interface{}
 }
 
 // HSetter hsetter interface
@@ -17,7 +17,7 @@ type HSetter interface {
 // NewHSet sets constructor
 func NewHSet() *HSet {
 	return &HSet{
-		cache: make(map[string]map[string]interface{}),
+		Cache: make(map[string]map[string]interface{}),
 	}
 }
 

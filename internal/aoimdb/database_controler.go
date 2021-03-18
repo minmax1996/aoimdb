@@ -3,6 +3,7 @@ package aoimdb
 import (
 	"errors"
 
+	"github.com/minmax1996/aoimdb/internal/aoimdb/filestorage"
 	"github.com/minmax1996/aoimdb/logger"
 )
 
@@ -11,20 +12,23 @@ var DatabaseInstance *DatabaseController
 
 // DatabaseController Database structure
 type DatabaseController struct {
-	databases map[string]*Database
+	Databases map[string]*Database
 	users     *Set
 }
 
 // NewDatabaseController database constructir
 func NewDatabaseController() *DatabaseController {
-	return &DatabaseController{
-		databases: make(map[string]*Database),
+	dbc := &DatabaseController{
+		Databases: make(map[string]*Database),
 		users:     NewSet(),
 	}
+
+	return dbc
 }
 
 func init() {
 	DatabaseInstance = NewDatabaseController()
+	filestorage.StartBackups(DatabaseInstance)
 }
 
 //AuthentificateByUserPass v
@@ -48,15 +52,15 @@ func (dbc *DatabaseController) AddUser(user, pass string) error {
 
 // SelectDatabase SelectDatabase
 func (dbc *DatabaseController) SelectDatabase(name string) {
-	if _, ok := dbc.databases[name]; !ok {
+	if _, ok := dbc.Databases[name]; !ok {
 		logger.Info("create database")
-		dbc.databases[name] = NewDatabase(name)
+		dbc.Databases[name] = NewDatabase(name)
 	}
 }
 
 // Get Get
 func (dbc *DatabaseController) Get(dbName, key string) (interface{}, error) {
-	db, ok := dbc.databases[dbName]
+	db, ok := dbc.Databases[dbName]
 	if !ok {
 		return nil, errors.New("database with this name does not exist")
 	}
@@ -66,7 +70,7 @@ func (dbc *DatabaseController) Get(dbName, key string) (interface{}, error) {
 
 // Set Set
 func (dbc *DatabaseController) Set(dbName, key string, value interface{}) error {
-	db, ok := dbc.databases[dbName]
+	db, ok := dbc.Databases[dbName]
 	if !ok {
 		return errors.New("database with this name does not exist")
 	}
@@ -75,7 +79,7 @@ func (dbc *DatabaseController) Set(dbName, key string, value interface{}) error 
 
 // HSet hset
 func (dbc *DatabaseController) HSet(dbName, key string) (interface{}, error) {
-	db, ok := dbc.databases[dbName]
+	db, ok := dbc.Databases[dbName]
 	if !ok {
 		return nil, errors.New("database with this name does not exist")
 	}
@@ -84,7 +88,7 @@ func (dbc *DatabaseController) HSet(dbName, key string) (interface{}, error) {
 
 // HGet HGet
 func (dbc *DatabaseController) HGet(dbName, key string, value interface{}) error {
-	db, ok := dbc.databases[dbName]
+	db, ok := dbc.Databases[dbName]
 	if !ok {
 		return errors.New("database with this name does not exist")
 	}
