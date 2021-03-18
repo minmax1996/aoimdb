@@ -40,10 +40,8 @@ func Send(name string, s ...string) error {
 func main() {
 	var err error
 
-	//try auth by username and password
-
 	//Open tcp connect to base port
-	connection, err = net.Dial("tcp", ":1593")
+	connection, err = net.Dial("tcp", "127.0.0.1:1593")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -54,7 +52,7 @@ func main() {
 	writer = bufio.NewWriter(connection)
 
 	//start goroutine to listen responses from connection
-	go startListenResponses()
+	startListenResponses()
 
 	// try to authenticate user if credentials provided, otherwise user can authenticate by himself later
 	if err := handleAuthenticate(); err != nil {
@@ -101,58 +99,60 @@ func startListenCommands() {
 
 		command, args, err := commands.ParseCommand(strings.TrimSpace(userInput), " ")
 		if err != nil {
-			logger.Error(err.Error())
+			fmt.Println("(error) ERR " + err.Error())
 			continue
 		}
 
 		if err := command.CallWithArgs(args...); err != nil {
-			logger.Error(err.Error())
+			fmt.Println("(error) ERR " + err.Error())
 			continue
 		}
 	}
 }
 
 func startListenResponses() {
-	for {
-		data, err := reader.ReadString('\n')
-		if err != nil {
-			os.Exit(1)
-		}
+	go func() {
+		for {
+			data, err := reader.ReadString('\n')
+			if err != nil {
+				os.Exit(1)
+			}
 
-		var item msg_protocol.MsgPackRootMessage
-		err = msgpack.Unmarshal([]byte(data), &item)
-		if err != nil {
-			logger.Error(err.Error())
-			continue
-		}
+			var item msg_protocol.MsgPackRootMessage
+			err = msgpack.Unmarshal([]byte(data), &item)
+			if err != nil {
+				logger.Error(err.Error())
+				continue
+			}
 
-		if item.Error != nil {
-			fmt.Println("ERR " + item.Error.Error())
-			continue
-		}
+			if item.Error != nil {
+				fmt.Println("(error) ERR " + item.Error.Error())
+				continue
+			}
 
-		switch {
-		case item.AuthResponse != nil:
-			fmt.Println(*item.AuthResponse)
-		case item.SelectResponse != nil:
-			fmt.Println(*item.SelectResponse)
-		case item.GetResponse != nil:
-			fmt.Println(*item.GetResponse)
-		case item.SetResponse != nil:
-			fmt.Println(*item.SetResponse)
-		default:
-			fmt.Println(item.Message)
-		}
+			switch {
+			case item.AuthResponse != nil:
+				fmt.Println(*item.AuthResponse)
+			case item.SelectResponse != nil:
+				fmt.Println(*item.SelectResponse)
+			case item.GetResponse != nil:
+				fmt.Println(*item.GetResponse)
+			case item.SetResponse != nil:
+				fmt.Println(*item.SetResponse)
+			default:
+				fmt.Println(item.Message)
+			}
 
-		// if strings.HasPrefix(item.Message, "csv>") {
-		// 	table, err := tablewriter.NewCSVReader(os.Stdout, csv.NewReader(strings.NewReader(strings.Replace(item.Message, "csv>", "", 1))), false)
-		// 	if err != nil {
-		// 		logger.Error(err.Error())
-		// 		continue
-		// 	}
-		// 	table.Render()
-		// } else {
-		// 	fmt.Print("< " + item.Message)
-		// }
-	}
+			// if strings.HasPrefix(item.Message, "csv>") {
+			// 	table, err := tablewriter.NewCSVReader(os.Stdout, csv.NewReader(strings.NewReader(strings.Replace(item.Message, "csv>", "", 1))), false)
+			// 	if err != nil {
+			// 		logger.Error(err.Error())
+			// 		continue
+			// 	}
+			// 	table.Render()
+			// } else {
+			// 	fmt.Print("< " + item.Message)
+			// }
+		}
+	}()
 }

@@ -41,7 +41,7 @@ func ParseCommand(input string, sep string) (Commander, []string, error) {
 	uArr := strings.Split(input, sep)
 	command := GetCommand(uArr[0])
 	if command == nil {
-		return nil, nil, errors.New("unknown command")
+		return nil, nil, errors.New("unknown command `" + uArr[0] + "`")
 	}
 
 	if err := command.ValidateUserInput(uArr); err != nil {

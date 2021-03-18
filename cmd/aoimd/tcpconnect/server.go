@@ -12,14 +12,16 @@ type TCPServer struct {
 	clients    []*Client
 	connect    chan net.Conn
 	disconnect chan *Client
+	errorChan  chan error
 }
 
 // CreateTCPServer creates new server and starts listening for connections.
-func CreateTCPServer() *TCPServer {
+func CreateTCPServer(errChan chan error) *TCPServer {
 	ser := &TCPServer{
 		clients:    make([]*Client, 0),
 		connect:    make(chan net.Conn),
 		disconnect: make(chan *Client),
+		errorChan:  errChan,
 	}
 
 	commands.RegisterCommand(commands.NewAuthCommand(nil))
@@ -64,7 +66,7 @@ func (ser *TCPServer) Join(conn net.Conn) {
 func (ser *TCPServer) Remove(dcClient *Client) {
 	for i, v := range ser.clients {
 		if v == dcClient {
-			ser.clients = append(ser.clients[:i], ser.clients[i+1:]...)
+			ser.clients = append(ser.clients[:i], ser.clients[i+1:]...) //reslice
 			return
 		}
 	}

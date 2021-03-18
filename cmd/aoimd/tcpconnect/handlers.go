@@ -71,6 +71,8 @@ func (c *Client) GetHandler(s ...string) error {
 		return errors.New("database not selected")
 	}
 
+	db.DatabaseInstance.SelectDatabase(selectedDatabase)
+
 	val, err := db.DatabaseInstance.Get(selectedDatabase, key)
 	if err != nil {
 		return err
@@ -98,6 +100,8 @@ func (c *Client) SetHandler(s ...string) error {
 	if len(selectedDatabase) == 0 {
 		return errors.New("database not selected")
 	}
+
+	db.DatabaseInstance.SelectDatabase(selectedDatabase)
 
 	err := db.DatabaseInstance.Set(selectedDatabase, key, value)
 	if err != nil {

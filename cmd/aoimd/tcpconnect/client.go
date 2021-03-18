@@ -34,13 +34,10 @@ type SessionData struct {
 // CreateClient creates new client and starts listening
 // for incoming and outgoing messages.
 func CreateClient(conn net.Conn, server *TCPServer) *Client {
-	writer := bufio.NewWriter(conn)
-	reader := bufio.NewReader(conn)
-
 	client := &Client{
 		conn:        conn,
-		writer:      writer,
-		reader:      reader,
+		writer:      bufio.NewWriter(conn),
+		reader:      bufio.NewReader(conn),
 		incoming:    make(chan string),
 		disconnect:  server.disconnect,
 		SessionData: SessionData{},
@@ -59,17 +56,6 @@ func (client *Client) WriteError(err error) {
 
 // Write writes message to the client.
 func (client *Client) Write(msg *msg_protocol.MsgPackRootMessage) {
-	//var stringMsg string
-	// switch msg.(type) {
-	// case string:
-	// 	stringMsg = msg.(string)
-	// case []string:
-	// 	stringMsg = fmt.Sprintf("csv>%s,%s", msg.([]string)[0], msg.([]string)[1])
-	// case error:
-	// 	stringMsg = fmt.Sprintf("err>%s", msg.(error).Error())
-	// }
-	// logger.Info("send: " + stringMsg)
-
 	b, err := msgpack.Marshal(msg)
 	if err != nil {
 		logger.Warn(err.Error())

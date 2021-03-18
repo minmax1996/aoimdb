@@ -8,12 +8,8 @@ import (
 	"github.com/minmax1996/aoimdb/logger"
 )
 
-var (
-	errChan chan error
-)
-
 func init() {
-	errChan = make(chan error)
+
 	aoimdb.DatabaseInstance.AddUser("admin", "pass")
 }
 
@@ -21,8 +17,8 @@ const (
 	tcpPort = ":1593" // last digit of "aoim": a=1 o=15 i=9 m=13
 )
 
-func startListenForUnprotectedTCP(errChan chan error) error {
-	server := tcpconnect.CreateTCPServer()
+func startListenForTCPConnects(errChan chan error) error {
+	server := tcpconnect.CreateTCPServer(errChan)
 	listener, err := net.Listen("tcp", tcpPort)
 	if err != nil {
 		logger.Error(err)
@@ -47,12 +43,16 @@ func startListenForUnprotectedTCP(errChan chan error) error {
 }
 
 func main() {
+	// main error chan
+	errChan := make(chan error)
 	logger.Info("This is EntryPoint for database service")
-	if err := startListenForUnprotectedTCP(errChan); err != nil {
+
+	if err := startListenForTCPConnects(errChan); err != nil {
 		logger.Fatal(err)
 		return
 	}
 
+	//main loop for errors
 	for {
 		select {
 		case err := <-errChan:
