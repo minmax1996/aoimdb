@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"strings"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/minmax1996/aoimdb/api/commands"
 	"github.com/minmax1996/aoimdb/api/msg_protocol"
-	"github.com/minmax1996/aoimdb/logger"
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -21,6 +19,9 @@ var (
 	connection net.Conn
 	reader     *bufio.Reader
 	writer     *bufio.Writer
+	username   string
+	password   string
+	host       string
 )
 
 func init() {
@@ -29,6 +30,11 @@ func init() {
 	commands.RegisterCommand(commands.NewGetCommand(Send))
 	commands.RegisterCommand(commands.NewSetCommand(Send))
 	commands.RegisterCommand(commands.NewExitCommand(Send))
+
+	flag.StringVar(&username, "u", "", "a string var for username")
+	flag.StringVar(&password, "p", "", "a string var for password")
+	flag.StringVar(&host, "h", "127.0.0.1:1593", "a string var for host to connect")
+	flag.Parse()
 }
 
 //Send sends command string to establised connection
@@ -41,9 +47,10 @@ func main() {
 	var err error
 
 	//Open tcp connect to base port
-	connection, err = net.Dial("tcp", "127.0.0.1:1593")
+	connection, err = net.Dial("tcp", host)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("(connect_error) ERR " + err.Error())
+		os.Exit(0)
 	}
 	defer connection.Close()
 
@@ -56,7 +63,7 @@ func main() {
 
 	// try to authenticate user if credentials provided, otherwise user can authenticate by himself later
 	if err := handleAuthenticate(); err != nil {
-		logger.Error("err in authenticate: " + err.Error())
+		fmt.Println("(auth_error) ERR " + err.Error())
 	}
 
 	//shows help command
@@ -67,12 +74,6 @@ func main() {
 }
 
 func handleAuthenticate() error {
-	var username, password string
-
-	flag.StringVar(&username, "u", "", "a string var for username")
-	flag.StringVar(&password, "p", "", "a string var for password")
-	flag.Parse()
-
 	if len(username) > 0 && len(password) > 0 {
 		fmt.Println("[Warning] Using a password on the command line interface can be insecure.")
 		return commands.GetCommand("auth").CallWithArgs(username, password)
@@ -121,7 +122,7 @@ func startListenResponses() {
 			var item msg_protocol.MsgPackRootMessage
 			err = msgpack.Unmarshal([]byte(data), &item)
 			if err != nil {
-				logger.Error(err.Error())
+				fmt.Println("(error) ERR " + err.Error())
 				continue
 			}
 
