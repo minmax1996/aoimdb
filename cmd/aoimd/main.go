@@ -3,9 +3,12 @@ package main
 import (
 	"net"
 
+	pb "github.com/minmax1996/aoimdb/api/proto/command"
+	"github.com/minmax1996/aoimdb/cmd/aoimd/grpcconnect"
 	"github.com/minmax1996/aoimdb/cmd/aoimd/tcpconnect"
 	"github.com/minmax1996/aoimdb/internal/aoimdb"
 	"github.com/minmax1996/aoimdb/logger"
+	"google.golang.org/grpc"
 )
 
 func init() {
@@ -14,7 +17,8 @@ func init() {
 }
 
 const (
-	tcpPort = ":1593" // last digit of "aoim": a=1 o=15 i=9 m=13
+	tcpPort  = ":1593" // last digit of "aoim": a=1 o=15 i=9 m=13
+	grcpPort = ":50051"
 )
 
 func startListenForTCPConnects(errChan chan error) error {
@@ -42,12 +46,33 @@ func startListenForTCPConnects(errChan chan error) error {
 	return nil
 }
 
+func startListenForGRPCConnects(errChan chan error) error {
+	listener, err := net.Listen("tcp", grcpPort)
+	if err != nil {
+		return err
+	}
+	s := grpc.NewServer()
+	pb.RegisterDatabaseControllerServer(s, &grpcconnect.Server{})
+
+	go func() {
+		if err := s.Serve(listener); err != nil {
+			errChan <- err
+		}
+	}()
+	return nil
+}
+
 func main() {
 	// main error chan
 	errChan := make(chan error)
 	logger.Info("This is EntryPoint for database service")
 
 	if err := startListenForTCPConnects(errChan); err != nil {
+		logger.Fatal(err)
+		return
+	}
+
+	if err := startListenForGRPCConnects(errChan); err != nil {
 		logger.Fatal(err)
 		return
 	}
