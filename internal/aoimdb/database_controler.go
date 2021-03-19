@@ -3,37 +3,44 @@ package aoimdb
 import (
 	"errors"
 
+	"github.com/minmax1996/aoimdb/internal/aoimdb/datatypes"
 	"github.com/minmax1996/aoimdb/internal/aoimdb/filestorage"
 	"github.com/minmax1996/aoimdb/logger"
 )
 
-//DatabaseInstance to easy access to database from any part of program
-var DatabaseInstance *DatabaseController
+//databaseInstance to easy access to database from any part of program
+var databaseInstance *DatabaseController
 
 // DatabaseController Database structure
 type DatabaseController struct {
-	Databases map[string]*Database
-	users     *Set
+	Databases map[string]*datatypes.Database
+	users     *datatypes.Set
 }
 
 // NewDatabaseController database constructir
 func NewDatabaseController() *DatabaseController {
 	dbc := &DatabaseController{
-		Databases: make(map[string]*Database),
-		users:     NewSet(),
+		Databases: make(map[string]*datatypes.Database),
+		users:     datatypes.NewSet(),
 	}
 
 	return dbc
 }
 
-func init() {
-	DatabaseInstance = NewDatabaseController()
-	filestorage.StartBackups(DatabaseInstance)
+//InitDatabaseController uses to restore data from backup if exists or create new database
+func InitDatabaseController() {
+	databaseInstance = NewDatabaseController()
+	if err := filestorage.RestoreFromBackup(databaseInstance); err != nil {
+		logger.Error("cant restore " + err.Error())
+	}
+
+	// backups only exported fields
+	filestorage.StartBackups(databaseInstance)
 }
 
 //AuthentificateByUserPass v
-func (dbc *DatabaseController) AuthentificateByUserPass(user, pass string) error {
-	val, err := dbc.users.Get(user)
+func AuthentificateByUserPass(user, pass string) error {
+	val, err := databaseInstance.users.Get(user)
 	if err != nil {
 		return err
 	}
@@ -45,22 +52,22 @@ func (dbc *DatabaseController) AuthentificateByUserPass(user, pass string) error
 	return nil
 }
 
-//AddUser AddUser
-func (dbc *DatabaseController) AddUser(user, pass string) error {
-	return dbc.users.Set(user, pass)
+//AddUser AddUser to auth with
+func AddUser(user, pass string) error {
+	return databaseInstance.users.Set(user, pass)
 }
 
-// SelectDatabase SelectDatabase
-func (dbc *DatabaseController) SelectDatabase(name string) {
-	if _, ok := dbc.Databases[name]; !ok {
+// SelectDatabase checks if database exists and create it if not
+func SelectDatabase(name string) {
+	if _, ok := databaseInstance.Databases[name]; !ok {
 		logger.Info("create database")
-		dbc.Databases[name] = NewDatabase(name)
+		databaseInstance.Databases[name] = datatypes.NewDatabase(name)
 	}
 }
 
-// Get Get
-func (dbc *DatabaseController) Get(dbName, key string) (interface{}, error) {
-	db, ok := dbc.Databases[dbName]
+// Get gets data from set by key
+func Get(dbName, key string) (interface{}, error) {
+	db, ok := databaseInstance.Databases[dbName]
 	if !ok {
 		return nil, errors.New("database with this name does not exist")
 	}
@@ -68,29 +75,29 @@ func (dbc *DatabaseController) Get(dbName, key string) (interface{}, error) {
 	return db.Get(key)
 }
 
-// Set Set
-func (dbc *DatabaseController) Set(dbName, key string, value interface{}) error {
-	db, ok := dbc.Databases[dbName]
+// Set sets data to set by key
+func Set(dbName, key string, value interface{}) error {
+	db, ok := databaseInstance.Databases[dbName]
 	if !ok {
 		return errors.New("database with this name does not exist")
 	}
 	return db.Set(key, value)
 }
 
-// HSet hset
-func (dbc *DatabaseController) HSet(dbName, key string) (interface{}, error) {
-	db, ok := dbc.Databases[dbName]
+// HSet sets data in hashset <NOT IMPLEMENTED YET>
+func HSet(dbName, key string, value interface{}) error {
+	db, ok := databaseInstance.Databases[dbName]
+	if !ok {
+		return errors.New("database with this name does not exist")
+	}
+	return db.Set(key, value)
+}
+
+// HGet gets data from hashset <NOT IMPLEMENTED YET>
+func HGet(dbName, key string) (interface{}, error) {
+	db, ok := databaseInstance.Databases[dbName]
 	if !ok {
 		return nil, errors.New("database with this name does not exist")
 	}
 	return db.Get(key)
-}
-
-// HGet HGet
-func (dbc *DatabaseController) HGet(dbName, key string, value interface{}) error {
-	db, ok := dbc.Databases[dbName]
-	if !ok {
-		return errors.New("database with this name does not exist")
-	}
-	return db.Set(key, value)
 }

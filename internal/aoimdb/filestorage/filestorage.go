@@ -27,14 +27,20 @@ func StartBackups(db interface{}) {
 	go func() {
 		for {
 			time.Sleep(3 * time.Second)
-			zipped, err := EncodeAndCompress(db)
-			if err != nil {
-				logger.Error(err.Error())
-				continue
+			if err := Backup(db); err != nil {
+				logger.Error(err)
 			}
-			WriteToFile(zipped, databaseBackupFileName)
 		}
 	}()
+}
+
+func Backup(db interface{}) error {
+	zipped, err := EncodeAndCompress(db)
+	if err != nil {
+		return err
+	}
+	WriteToFile(zipped, databaseBackupFileName)
+	return nil
 }
 
 func ReadFromFile(from string) ([]byte, error) {
@@ -92,7 +98,7 @@ func DecompressAndDecore(db interface{}, s []byte) error {
 
 	fmt.Println("uncompressed size (bytes): ", len(data))
 
-	if err := gob.NewDecoder(bytes.NewReader(data)).Decode(&db); err != nil {
+	if err := gob.NewDecoder(bytes.NewReader(data)).Decode(db); err != nil {
 		return err
 	}
 

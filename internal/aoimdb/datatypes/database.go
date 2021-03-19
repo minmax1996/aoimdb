@@ -1,4 +1,4 @@
-package aoimdb
+package datatypes
 
 //Database Database structure
 type Database struct {

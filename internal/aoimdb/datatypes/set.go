@@ -1,4 +1,4 @@
-package aoimdb
+package datatypes
 
 import "errors"
 

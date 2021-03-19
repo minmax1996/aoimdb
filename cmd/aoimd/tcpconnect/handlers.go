@@ -32,7 +32,7 @@ func (c *Client) Handle(command commands.Commander, args []string) error {
 
 //Send sends command string to establised connection
 func (c *Client) AuthHandler(s ...string) error {
-	if err := db.DatabaseInstance.AuthentificateByUserPass(s[0], s[1]); err != nil {
+	if err := db.AuthentificateByUserPass(s[0], s[1]); err != nil {
 		return err
 	}
 
@@ -48,7 +48,7 @@ func (c *Client) AuthHandler(s ...string) error {
 //Send sends command string to establised connection
 func (c *Client) SelectHandler(s ...string) error {
 	c.SessionData.selectedDatabase = s[0]
-	db.DatabaseInstance.SelectDatabase(s[0])
+	db.SelectDatabase(s[0])
 
 	c.Write(&msg_protocol.MsgPackRootMessage{
 		SelectResponse: &msg_protocol.SelectResponse{
@@ -71,9 +71,9 @@ func (c *Client) GetHandler(s ...string) error {
 		return errors.New("database not selected")
 	}
 
-	db.DatabaseInstance.SelectDatabase(selectedDatabase)
+	db.SelectDatabase(selectedDatabase)
 
-	val, err := db.DatabaseInstance.Get(selectedDatabase, key)
+	val, err := db.Get(selectedDatabase, key)
 	if err != nil {
 		return err
 	}
@@ -101,9 +101,9 @@ func (c *Client) SetHandler(s ...string) error {
 		return errors.New("database not selected")
 	}
 
-	db.DatabaseInstance.SelectDatabase(selectedDatabase)
+	db.SelectDatabase(selectedDatabase)
 
-	err := db.DatabaseInstance.Set(selectedDatabase, key, value)
+	err := db.Set(selectedDatabase, key, value)
 	if err != nil {
 		return err
 	}

@@ -9,8 +9,8 @@ import (
 )
 
 func init() {
-
-	aoimdb.DatabaseInstance.AddUser("admin", "pass")
+	aoimdb.InitDatabaseController()
+	aoimdb.AddUser("admin", "pass")
 }
 
 const (
@@ -51,6 +51,8 @@ func main() {
 		logger.Fatal(err)
 		return
 	}
+
+	//TODO MAnual Backup on stop app
 
 	//main loop for errors
 	for {

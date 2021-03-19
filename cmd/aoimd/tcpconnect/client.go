@@ -17,9 +17,7 @@ type Client struct {
 	writer   *bufio.Writer
 	reader   *bufio.Reader
 	incoming chan string
-	outgoing chan string
 
-	stop       chan bool
 	disconnect chan *Client
 
 	SessionData SessionData
@@ -43,7 +41,6 @@ func CreateClient(conn net.Conn, server *TCPServer) *Client {
 		SessionData: SessionData{},
 	}
 
-	//go client.Write()
 	go client.Read()
 
 	return client
