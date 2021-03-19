@@ -1,5 +1,10 @@
 package datatypes
 
+import (
+	"fmt"
+	"regexp"
+)
+
 //Database Database structure
 type Database struct {
 	Name  string
@@ -14,6 +19,21 @@ func NewDatabase(name string) *Database {
 		Sets:  NewSet(),
 		HSets: NewHSet(),
 	}
+}
+
+func (db *Database) Keys(keysPattern string) []string {
+	result := []string{}
+	for k := range db.Sets.Cache {
+		if matched, _ := regexp.MatchString(keysPattern, k); matched {
+			result = append(result, fmt.Sprintf("SET %s.%s", db.Name, k))
+		}
+	}
+	for k := range db.HSets.Cache {
+		if matched, _ := regexp.MatchString(keysPattern, k); matched {
+			result = append(result, fmt.Sprintf("HSET %s.%s", db.Name, k))
+		}
+	}
+	return result
 }
 
 //Get Get

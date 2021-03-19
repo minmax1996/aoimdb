@@ -8,6 +8,7 @@ type MsgPackRootMessage struct {
 	SelectResponse *SelectResponse
 	GetResponse    *GetResponse
 	SetResponse    *SetResponse
+	KeysResponse   *KeysResponse
 }
 
 type AuthResponse struct {
@@ -25,4 +26,8 @@ type GetResponse struct {
 
 type SetResponse struct {
 	Message string
+}
+
+type KeysResponse struct {
+	Keys []string
 }

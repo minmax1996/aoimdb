@@ -84,6 +84,24 @@ func Set(dbName, key string, value interface{}) error {
 	return db.Set(key, value)
 }
 
+// Set sets data to set by key
+func GetKeys(dbName, keyspattern string) ([]string, error) {
+	result := []string{}
+	if len(dbName) > 0 {
+		db, ok := databaseInstance.Databases[dbName]
+		if !ok {
+			return nil, errors.New("database with this name does not exist")
+		}
+		result = append(result, db.Keys(keyspattern)...)
+	} else {
+		for _, db := range databaseInstance.Databases {
+			result = append(result, db.Keys(keyspattern)...)
+		}
+	}
+
+	return result, nil
+}
+
 // HSet sets data in hashset <NOT IMPLEMENTED YET>
 func HSet(dbName, key string, value interface{}) error {
 	db, ok := databaseInstance.Databases[dbName]

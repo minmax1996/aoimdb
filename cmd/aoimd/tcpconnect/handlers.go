@@ -17,6 +17,8 @@ func (c *Client) Handle(command commands.Commander, args []string) error {
 		return c.AuthHandler(args...)
 	case cmd == "select" && c.SessionData.authenticated:
 		return c.SelectHandler(args...)
+	case cmd == "keys" && c.SessionData.authenticated:
+		return c.KeysHandler(args...)
 	case cmd == "get" && c.SessionData.authenticated:
 		return c.GetHandler(args...)
 	case cmd == "set" && c.SessionData.authenticated:
@@ -111,6 +113,31 @@ func (c *Client) SetHandler(s ...string) error {
 	c.Write(&msg_protocol.MsgPackRootMessage{
 		SetResponse: &msg_protocol.SetResponse{
 			Message: "ok",
+		},
+	})
+	return nil
+}
+
+//Send sends command string to establised connection
+func (c *Client) KeysHandler(s ...string) error {
+	//Get client last selected database and no keypatterf by default
+	selectedDatabase, keypattern := c.SessionData.selectedDatabase, ""
+	if len(s) > 0 {
+		//if user provided
+		if strings.Contains(s[0], ".") {
+			splited := strings.SplitN(s[0], ".", 2)
+			selectedDatabase, keypattern = splited[0], splited[1]
+		}
+	}
+
+	result, err := db.GetKeys(selectedDatabase, keypattern)
+	if err != nil {
+		return err
+	}
+
+	c.Write(&msg_protocol.MsgPackRootMessage{
+		KeysResponse: &msg_protocol.KeysResponse{
+			Keys: result,
 		},
 	})
 	return nil

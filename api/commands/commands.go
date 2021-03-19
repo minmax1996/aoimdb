@@ -83,6 +83,14 @@ func NewSetCommand(callback func(string, ...string) error) Commander {
 		callback)
 }
 
+//NewSetCommand constructor standart server commands
+func NewKeysCommand(callback func(string, ...string) error) Commander {
+	return NewBaseCommand("keys", 1, 2,
+		"keys database command",
+		"(Usage: keys [keysregexp])",
+		callback)
+}
+
 //NewExitCommand constructor standart server commands
 func NewExitCommand(callback func(string, ...string) error) Commander {
 	return NewBaseCommand("exit", 1, 1,

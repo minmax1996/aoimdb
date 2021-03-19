@@ -29,6 +29,7 @@ func init() {
 	commands.RegisterCommand(commands.NewSelectCommand(Send))
 	commands.RegisterCommand(commands.NewGetCommand(Send))
 	commands.RegisterCommand(commands.NewSetCommand(Send))
+	commands.RegisterCommand(commands.NewKeysCommand(Send))
 	commands.RegisterCommand(commands.NewExitCommand(Send))
 
 	flag.StringVar(&username, "u", "", "a string var for username")
@@ -140,6 +141,8 @@ func startListenResponses() {
 				fmt.Println(*item.GetResponse)
 			case item.SetResponse != nil:
 				fmt.Println(*item.SetResponse)
+			case item.KeysResponse != nil:
+				fmt.Println(*item.KeysResponse)
 			default:
 				fmt.Println(item.Message)
 			}
