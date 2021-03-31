@@ -15,5 +15,3 @@
 # vendor/
 *__debug_bin
 cmd/aoimd/dbbackup.aoimdb
-cmd/aoimd/aoimd
-aoimd
