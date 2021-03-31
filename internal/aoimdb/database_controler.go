@@ -35,7 +35,7 @@ func InitDatabaseController() {
 	}
 
 	// backups only exported fields
-	filestorage.StartBackups(databaseInstance)
+	filestorage.StartBackups(databaseInstance, 30)
 }
 
 //AuthentificateByUserPass v

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/gob"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -15,6 +14,7 @@ import (
 
 var databaseBackupFileName = "dbbackup.aoimdb"
 
+//RestoreFromBackup reads file to db interface
 func RestoreFromBackup(db interface{}) error {
 	data, err := ReadFromFile(databaseBackupFileName)
 	if err != nil {
@@ -23,10 +23,11 @@ func RestoreFromBackup(db interface{}) error {
 	return DecompressAndDecore(db, data)
 }
 
-func StartBackups(db interface{}) {
+//StartBackups start goroutine to backup db interface on interval
+func StartBackups(db interface{}, seconds int) {
 	go func() {
 		for {
-			time.Sleep(3 * time.Second)
+			time.Sleep(time.Duration(seconds) * time.Second)
 			if err := Backup(db); err != nil {
 				logger.Error(err)
 			}
@@ -34,15 +35,18 @@ func StartBackups(db interface{}) {
 	}()
 }
 
+//Backup writes to file db interface
 func Backup(db interface{}) error {
 	zipped, err := EncodeAndCompress(db)
 	if err != nil {
 		return err
 	}
 	WriteToFile(zipped, databaseBackupFileName)
+	logger.Debug("Db Backup executed")
 	return nil
 }
 
+//ReadFromFile reads from file
 func ReadFromFile(from string) ([]byte, error) {
 	f, err := os.Open(from)
 	if err != nil {
@@ -58,6 +62,7 @@ func ReadFromFile(from string) ([]byte, error) {
 	return data, nil
 }
 
+//WriteToFile writes to file
 func WriteToFile(s []byte, file string) {
 	f, err := os.Create(file)
 	if err != nil {
@@ -67,24 +72,21 @@ func WriteToFile(s []byte, file string) {
 	f.Write(s)
 }
 
+//EncodeAndCompress ecode p interface tand then gzip it
 func EncodeAndCompress(p interface{}) ([]byte, error) {
 	buf := bytes.Buffer{}
 
 	if err := gob.NewEncoder(&buf).Encode(p); err != nil {
 		return nil, err
 	}
-
-	fmt.Println("uncompressed size (bytes): ", len(buf.Bytes()))
-
 	zipbuf := bytes.Buffer{}
 	zipped := gzip.NewWriter(&zipbuf)
 	zipped.Write(buf.Bytes())
 	zipped.Close()
-
-	fmt.Println("compressed size (bytes): ", len(zipbuf.Bytes()))
 	return zipbuf.Bytes(), nil
 }
 
+//DecompressAndDecore decompresses []byte from s and decode to db interface{}
 func DecompressAndDecore(db interface{}, s []byte) error {
 	rdr, err := gzip.NewReader(bytes.NewReader(s))
 	if err != nil {
@@ -95,8 +97,6 @@ func DecompressAndDecore(db interface{}, s []byte) error {
 	if err != nil {
 		return err
 	}
-
-	fmt.Println("uncompressed size (bytes): ", len(data))
 
 	if err := gob.NewDecoder(bytes.NewReader(data)).Decode(db); err != nil {
 		return err
