@@ -1,8 +1,11 @@
 package main
 
 import (
+	"flag"
 	"net"
 
+	"github.com/gin-gonic/contrib/static"
+	"github.com/gin-gonic/gin"
 	pb "github.com/minmax1996/aoimdb/api/proto/command"
 	"github.com/minmax1996/aoimdb/cmd/aoimd/grpcconnect"
 	"github.com/minmax1996/aoimdb/cmd/aoimd/tcpconnect"
@@ -10,6 +13,10 @@ import (
 	"github.com/minmax1996/aoimdb/logger"
 	"google.golang.org/grpc"
 )
+
+func init() {
+	parseFlags()
+}
 
 func init() {
 	aoimdb.InitDatabaseController()
@@ -20,6 +27,15 @@ const (
 	tcpPort  = ":1593" // last digit of "aoim": a=1 o=15 i=9 m=13
 	grcpPort = ":50051"
 )
+
+var (
+	assetsPath = "./ui/build"
+)
+
+func parseFlags() {
+	flag.StringVar(&assetsPath, "assets_path", "./ui/build", "a string var for username")
+	flag.Parse()
+}
 
 func startListenForTCPConnects(errChan chan error) error {
 	server := tcpconnect.CreateTCPServer(errChan)
@@ -46,6 +62,22 @@ func startListenForTCPConnects(errChan chan error) error {
 	return nil
 }
 
+func startWebUI(errChan chan error) error {
+	router := gin.Default()
+	// Serve frontend static files
+	router.Use(static.Serve("/", static.LocalFile(assetsPath, true)))
+
+	// Start and run the server
+	go func(errorChannel chan error) {
+		err := router.Run(":3000")
+		if err != nil {
+			errorChannel <- err
+			return
+		}
+	}(errChan)
+	return nil
+}
+
 func startListenForGRPCConnects(errChan chan error) error {
 	listener, err := net.Listen("tcp", grcpPort)
 	if err != nil {
@@ -68,6 +100,11 @@ func main() {
 	logger.Info("This is EntryPoint for database service")
 
 	if err := startListenForTCPConnects(errChan); err != nil {
+		logger.Fatal(err)
+		return
+	}
+
+	if err := startWebUI(errChan); err != nil {
 		logger.Fatal(err)
 		return
 	}
