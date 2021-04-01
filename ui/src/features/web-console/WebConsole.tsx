@@ -30,10 +30,17 @@ export default function WebConsole() {
               }
             },
             clearkeys: { 
-              fn: () => {
-                return new Promise<any>((resolve, _) => {
-                  resolve('')
+              fn: () => { return new Promise<void>(resolve => {
                   dispatch(clearKeys())
+                  resolve()
+                })
+              }
+            },
+            keys: { 
+              fn: () => { return new Promise<void>(resolve => {
+                  dispatch(clearKeys())
+                  dispatch(addKey("get keys from database"))
+                  resolve()
                 })
               }
             },
