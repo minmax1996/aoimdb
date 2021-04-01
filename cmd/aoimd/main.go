@@ -6,19 +6,26 @@ import (
 
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
+	pb "github.com/minmax1996/aoimdb/api/proto/command"
+	"github.com/minmax1996/aoimdb/cmd/aoimd/grpcconnect"
 	"github.com/minmax1996/aoimdb/cmd/aoimd/tcpconnect"
 	"github.com/minmax1996/aoimdb/internal/aoimdb"
 	"github.com/minmax1996/aoimdb/logger"
+	"google.golang.org/grpc"
 )
 
 func init() {
 	parseFlags()
+}
+
+func init() {
 	aoimdb.InitDatabaseController()
 	aoimdb.AddUser("admin", "pass")
 }
 
 const (
-	tcpPort = ":1593" // last digit of "aoim": a=1 o=15 i=9 m=13
+	tcpPort  = ":1593" // last digit of "aoim": a=1 o=15 i=9 m=13
+	grcpPort = ":50051"
 )
 
 var (
@@ -68,7 +75,22 @@ func startWebUI(errChan chan error) error {
 			return
 		}
 	}(errChan)
+	return nil
+}
 
+func startListenForGRPCConnects(errChan chan error) error {
+	listener, err := net.Listen("tcp", grcpPort)
+	if err != nil {
+		return err
+	}
+	s := grpc.NewServer()
+	pb.RegisterDatabaseControllerServer(s, &grpcconnect.Server{})
+
+	go func() {
+		if err := s.Serve(listener); err != nil {
+			errChan <- err
+		}
+	}()
 	return nil
 }
 
@@ -83,6 +105,11 @@ func main() {
 	}
 
 	if err := startWebUI(errChan); err != nil {
+		logger.Fatal(err)
+		return
+	}
+
+	if err := startListenForGRPCConnects(errChan); err != nil {
 		logger.Fatal(err)
 		return
 	}

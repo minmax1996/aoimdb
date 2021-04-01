@@ -1,6 +1,8 @@
 package aoimdb
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 
 	"github.com/minmax1996/aoimdb/internal/aoimdb/datatypes"
@@ -13,15 +15,17 @@ var databaseInstance *DatabaseController
 
 // DatabaseController Database structure
 type DatabaseController struct {
-	Databases map[string]*datatypes.Database
-	users     *datatypes.Set
+	Databases    map[string]*datatypes.Database
+	users        *datatypes.Set
+	accessTokens *datatypes.Set
 }
 
 // NewDatabaseController database constructir
 func NewDatabaseController() *DatabaseController {
 	dbc := &DatabaseController{
-		Databases: make(map[string]*datatypes.Database),
-		users:     datatypes.NewSet(),
+		Databases:    make(map[string]*datatypes.Database),
+		users:        datatypes.NewSet(),
+		accessTokens: datatypes.NewSet(),
 	}
 
 	return dbc
@@ -52,9 +56,23 @@ func AuthentificateByUserPass(user, pass string) error {
 	return nil
 }
 
+//AuthentificateByToken
+func AuthentificateByToken(token string) error {
+	_, err := databaseInstance.accessTokens.Get(token)
+	return err
+}
+
 //AddUser AddUser to auth with
 func AddUser(user, pass string) error {
-	return databaseInstance.users.Set(user, pass)
+	if err := databaseInstance.users.Set(user, pass); err != nil {
+		return err
+	}
+	hasher := md5.New()
+	hasher.Write([]byte(user))
+	hasher.Write([]byte(pass))
+	accessToken := hex.EncodeToString(hasher.Sum(nil))
+	logger.Info(accessToken)
+	return databaseInstance.accessTokens.Set(accessToken, user)
 }
 
 // SelectDatabase checks if database exists and create it if not

@@ -34,8 +34,14 @@ func (c *Client) Handle(command commands.Commander, args []string) error {
 
 //Send sends command string to establised connection
 func (c *Client) AuthHandler(s ...string) error {
-	if err := db.AuthentificateByUserPass(s[0], s[1]); err != nil {
-		return err
+	if len(s) == 2 {
+		if err := db.AuthentificateByUserPass(s[0], s[1]); err != nil {
+			return err
+		}
+	} else if len(s) == 1 {
+		if err := db.AuthentificateByToken(s[0]); err != nil {
+			return err
+		}
 	}
 
 	c.Write(&msg_protocol.MsgPackRootMessage{

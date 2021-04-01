@@ -53,9 +53,9 @@ func ParseCommand(input string, sep string) (Commander, []string, error) {
 
 //NewAuthCommand constructor standart server commands
 func NewAuthCommand(callback func(string, ...string) error) Commander {
-	return NewBaseCommand("auth", 3, 3,
+	return NewBaseCommand("auth", 2, 3,
 		"auth database command",
-		"(Usage: auth user pass)",
+		"(Usage: auth user pass) or (Usage: auth <token>)",
 		callback)
 }
 
