@@ -10,7 +10,7 @@ function App() {
     <div className="App">
       <header className="App-header">
         <WebConsole />
-        <Counter />
+        {/* <Counter /> */}
         <Database />
       </header>
     </div>

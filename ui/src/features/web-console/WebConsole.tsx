@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 
 import ReactConsole from '@webscopeio/react-console'
 import { useDispatch } from 'react-redux'
-import { addKey } from '../database/databaseSlice';
+import { addKey, clearKeys } from '../database/databaseSlice';
 
 interface Command {
     description: string,
@@ -21,14 +21,19 @@ export default function WebConsole() {
           history={history}
           onAddHistoryItem={(item)=>setHistory([...history, item])}
           commands={{
-            echo: {
-              description: 'Echo',
+            echo: { 
               fn: (...args: any[]) => {
-                return new Promise<any>((resolve, reject) => {
-                  setTimeout(() => {
-                    resolve(`${args.join(' ')}`)
-                    dispatch(addKey(`${args.join(' ')}`))
-                  }, 2000)
+                return new Promise<any>((resolve, _) => {
+                  resolve(`${args.join(' ')}`)
+                  dispatch(addKey(`${args.join(' ')}`))
+                })
+              }
+            },
+            clearkeys: { 
+              fn: () => {
+                return new Promise<any>((resolve, _) => {
+                  resolve('')
+                  dispatch(clearKeys())
                 })
               }
             },

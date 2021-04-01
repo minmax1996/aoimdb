@@ -15,7 +15,6 @@ const initialState: DatabaseState = {
     keys: [],
     sets: [],
 };
-  
 
 export const databaseSlice = createSlice({
     name: 'database',
@@ -24,17 +23,16 @@ export const databaseSlice = createSlice({
       addKey: (state, action: PayloadAction<string>) => {
         state.keys.push(action.payload)
       },
-      addToSet: (state, action: PayloadAction<string>) => {
-        state.sets.push({key: action.payload, value: Object(action.payload)})
+      clearKeys: (state, action: PayloadAction<void>) => {
+        state.keys=[]
       },
-    //   // Use the PayloadAction type to declare the contents of `action.payload`
-    //   incrementByAmount: (state, action: PayloadAction<number>) => {
-    //     state.value += action.payload;
-    //   },
+      addToSet: (state, action: PayloadAction<Sets>) => {
+        state.sets.push(action.payload)
+      },
     },
   });
 
-export const { addKey, addToSet } = databaseSlice.actions;
+export const { addKey, addToSet, clearKeys} = databaseSlice.actions;
 
 export const selectSetKeys = (state: RootState) => state.database.keys;
 
