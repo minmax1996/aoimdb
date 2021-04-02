@@ -4,11 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"strings"
 
 	pb "github.com/minmax1996/aoimdb/api/proto/command"
 	db "github.com/minmax1996/aoimdb/internal/aoimdb"
-	"github.com/minmax1996/aoimdb/logger"
 )
 
 type Server struct {
@@ -16,17 +14,13 @@ type Server struct {
 }
 
 func HandleContextAuthentication(ctx context.Context) error {
-	logger.Warn("CONMETESAEDW")
+	accessToken, ok := ctx.Value("access_token").(string)
 	return nil
-	userPass, ok := ctx.Value("userPass").(string)
 	if !ok {
 		return errors.New("context has no userCredentials")
 	}
-	userPassParts := strings.SplitN(userPass, ":", 2)
-	if len(userPassParts) < 2 {
-		return errors.New("not enought args to process auth")
-	}
-	return db.AuthentificateByUserPass(userPassParts[0], userPassParts[1])
+
+	return db.AuthentificateByToken(accessToken)
 }
 
 func (s *Server) SelectDatabase(ctx context.Context, req *pb.SelectDatabaseRequest) (*pb.SelectDatabaseResponse, error) {
