@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"net"
+	"net/http"
 
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	pb "github.com/minmax1996/aoimdb/api/proto/command"
 	"github.com/minmax1996/aoimdb/cmd/aoimd/grpcconnect"
 	"github.com/minmax1996/aoimdb/cmd/aoimd/tcpconnect"
@@ -24,8 +27,9 @@ func init() {
 }
 
 const (
-	tcpPort  = ":1593" // last digit of "aoim": a=1 o=15 i=9 m=13
-	grcpPort = ":50051"
+	tcpPort       = ":1593" // last digit of "aoim": a=1 o=15 i=9 m=13
+	grcpPort      = ":50051"
+	httpProxyPort = ":8081"
 )
 
 var (
@@ -94,6 +98,26 @@ func startListenForGRPCConnects(errChan chan error) error {
 	return nil
 }
 
+func serveHttpGateway(errChan chan error) error {
+	ctx := context.Background()
+	// Register gRPC server endpoint
+	// Note: Make sure the gRPC server is running properly and accessible
+	mux := runtime.NewServeMux()
+	opts := []grpc.DialOption{grpc.WithInsecure()}
+	err := pb.RegisterDatabaseControllerHandlerFromEndpoint(ctx, mux, grcpPort, opts)
+	if err != nil {
+		return err
+	}
+
+	// Start HTTP server (and proxy calls to gRPC server endpoint)
+	go func() {
+		if err := http.ListenAndServe(httpProxyPort, mux); err != nil {
+			errChan <- err
+		}
+	}()
+	return nil
+}
+
 func main() {
 	// main error chan
 	errChan := make(chan error)
@@ -110,6 +134,11 @@ func main() {
 	}
 
 	if err := startListenForGRPCConnects(errChan); err != nil {
+		logger.Fatal(err)
+		return
+	}
+
+	if err := serveHttpGateway(errChan); err != nil {
 		logger.Fatal(err)
 		return
 	}

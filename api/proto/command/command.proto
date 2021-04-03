@@ -1,11 +1,18 @@
 syntax = "proto3";
 option go_package = "api/proto/command";
+import "api/proto/google/annotations.proto";
 
 service DatabaseController {
     rpc SelectDatabase (SelectDatabaseRequest) returns (SelectDatabaseResponse);
-    rpc Get (GetRequest) returns (GetResponse);
+    rpc Get (GetRequest) returns (GetResponse){
+        option (google.api.http) = {
+            get: "/api/get/{database_name}/{key}"
+        };};
     rpc Set (SetRequest) returns (SetResponse);
-    rpc GetKeys (GetKeysRequest) returns (GetKeysResponse);
+    rpc GetKeys (GetKeysRequest) returns (GetKeysResponse){
+        option (google.api.http) = {
+            get: "/api/keys/{database_name}/{key_pattern}"
+        };};
 }
 
 message SelectDatabaseRequest{
