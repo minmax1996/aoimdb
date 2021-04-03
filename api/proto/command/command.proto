@@ -8,7 +8,11 @@ service DatabaseController {
         option (google.api.http) = {
             get: "/api/get/{database_name}/{key}"
         };};
-    rpc Set (SetRequest) returns (SetResponse);
+    rpc Set (SetRequest) returns (SetResponse){
+        option (google.api.http) = {
+            post: "/api/set/{database_name}"
+            body: "*"
+        };};
     rpc GetKeys (GetKeysRequest) returns (GetKeysResponse){
         option (google.api.http) = {
             get: "/api/keys/{database_name}/{key_pattern}"
@@ -36,7 +40,7 @@ message GetResponse{
 message SetRequest{
     string database_name = 1;
     string key = 2;
-    bytes value = 3;
+    string value = 3;
 }
 
 message SetResponse{

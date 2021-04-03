@@ -69,7 +69,14 @@ func (s *Server) Set(ctx context.Context, req *pb.SetRequest) (*pb.SetResponse, 
 		return nil, err
 	}
 
-	return nil, nil
+	err := db.Set(req.DatabaseName, req.Key, req.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.SetResponse{
+		Status: "OK",
+	}, nil
 }
 
 func (s *Server) GetKeys(ctx context.Context, req *pb.GetKeysRequest) (*pb.GetKeysResponse, error) {

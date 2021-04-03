@@ -82,6 +82,44 @@
           "DatabaseController"
         ]
       }
+    },
+    "/api/set/{database_name}": {
+      "post": {
+        "operationId": "DatabaseController_Set",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/SetResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "database_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SetRequest"
+            }
+          }
+        ],
+        "tags": [
+          "DatabaseController"
+        ]
+      }
     }
   },
   "definitions": {
@@ -112,6 +150,20 @@
       "type": "object",
       "properties": {
         "name": {
+          "type": "string"
+        }
+      }
+    },
+    "SetRequest": {
+      "type": "object",
+      "properties": {
+        "database_name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "value": {
           "type": "string"
         }
       }
