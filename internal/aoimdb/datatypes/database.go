@@ -10,7 +10,7 @@ type Database struct {
 	Name   string
 	Sets   *Set
 	HSets  *HSet
-	Tables []*Table
+	Tables map[string]*Table
 }
 
 // NewDatabase database constructir
@@ -19,7 +19,7 @@ func NewDatabase(name string) *Database {
 		Name:   name,
 		Sets:   NewSet(),
 		HSets:  NewHSet(),
-		Tables: make([]*Table, 0),
+		Tables: make(map[string]*Table),
 	}
 }
 

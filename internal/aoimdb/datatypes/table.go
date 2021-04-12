@@ -2,42 +2,20 @@ package datatypes
 
 import (
 	"errors"
-	"time"
+	"reflect"
 )
-
-type ColumnType int
-
-const (
-	IntType ColumnType = iota
-	StringType
-	DateType
-)
-
-//
-func checkType(val interface{}, res ColumnType) bool {
-	switch val.(type) {
-	case int:
-		return res == IntType
-	case string:
-		return res == StringType
-	case time.Time:
-		return res == DateType
-	default:
-		return false
-	}
-}
 
 type Row []interface{}
 
 type Table struct {
 	Name        string
 	ColumnNames []string
-	ColumnTypes []ColumnType
+	ColumnTypes []reflect.Kind
 	DataRows    []Row
 }
 
 //NewTableSchema initialize new table scheam with no data
-func NewTableSchema(tableName string, names []string, types []ColumnType) *Table {
+func NewTableSchema(tableName string, names []string, types []reflect.Kind) *Table {
 	if len(names) != len(types) {
 		return nil
 	}
@@ -50,7 +28,7 @@ func NewTableSchema(tableName string, names []string, types []ColumnType) *Table
 }
 
 //NewTableWithRows initailexe new table with rows
-func NewTableWithRows(tableName string, names []string, types []ColumnType, rows []Row) *Table {
+func NewTableWithRows(tableName string, names []string, types []reflect.Kind, rows []Row) *Table {
 	if len(names) != len(types) {
 		return nil
 	}
@@ -71,7 +49,7 @@ func (t *Table) Insert(names []string, values []interface{}) error {
 	row := make(Row, len(t.ColumnNames))
 	for i, val := range values {
 		ind := findIndex(t.ColumnNames, names[i])
-		if ind == -1 || !checkType(val, t.ColumnTypes[ind]) {
+		if ind == -1 || reflect.TypeOf(val).Kind() != t.ColumnTypes[ind] {
 			return errors.New("cant append value")
 		}
 		row[ind] = val
@@ -91,7 +69,7 @@ func (t *Table) Select(names []string) *Table {
 	//make empty table with fixed lens
 	resultTable := &Table{
 		ColumnNames: make([]string, len(indexes)),
-		ColumnTypes: make([]ColumnType, len(indexes)),
+		ColumnTypes: make([]reflect.Kind, len(indexes)),
 		DataRows:    make([]Row, len(t.DataRows)),
 	}
 
