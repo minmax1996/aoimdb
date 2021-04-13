@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"net"
+	"net/http"
 
-	"github.com/gin-gonic/contrib/static"
-	"github.com/gin-gonic/gin"
+	"github.com/gorilla/mux"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	pb "github.com/minmax1996/aoimdb/api/proto/command"
 	"github.com/minmax1996/aoimdb/cmd/aoimd/grpcconnect"
 	"github.com/minmax1996/aoimdb/cmd/aoimd/tcpconnect"
@@ -16,16 +18,14 @@ import (
 
 func init() {
 	parseFlags()
-}
-
-func init() {
 	aoimdb.InitDatabaseController()
 	aoimdb.AddUser("admin", "pass")
 }
 
 const (
-	tcpPort  = ":1593" // last digit of "aoim": a=1 o=15 i=9 m=13
-	grcpPort = ":50051"
+	tcpPort       = ":1593" // last digit of "aoim": a=1 o=15 i=9 m=13
+	grcpPort      = ":50051"
+	httpProxyPort = ":8081"
 )
 
 var (
@@ -63,18 +63,14 @@ func startListenForTCPConnects(errChan chan error) error {
 }
 
 func startWebUI(errChan chan error) error {
-	router := gin.Default()
-	// Serve frontend static files
-	router.Use(static.Serve("/", static.LocalFile(assetsPath, true)))
-
-	// Start and run the server
-	go func(errorChannel chan error) {
-		err := router.Run(":3000")
-		if err != nil {
-			errorChannel <- err
-			return
+	r := mux.NewRouter()
+	r.Handle("/", http.FileServer(http.Dir(assetsPath)))
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(assetsPath+"/static/"))))
+	go func() {
+		if err := http.ListenAndServe(":3000", r); err != nil {
+			errChan <- err
 		}
-	}(errChan)
+	}()
 	return nil
 }
 
@@ -88,6 +84,26 @@ func startListenForGRPCConnects(errChan chan error) error {
 
 	go func() {
 		if err := s.Serve(listener); err != nil {
+			errChan <- err
+		}
+	}()
+	return nil
+}
+
+func serveHttpGateway(errChan chan error) error {
+	ctx := context.Background()
+	// Register gRPC server endpoint
+	// Note: Make sure the gRPC server is running properly and accessible
+	muxx := runtime.NewServeMux()
+	opts := []grpc.DialOption{grpc.WithInsecure()}
+
+	err := pb.RegisterDatabaseControllerHandlerFromEndpoint(ctx, muxx, grcpPort, opts)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		if err := http.ListenAndServe(httpProxyPort, muxx); err != nil {
 			errChan <- err
 		}
 	}()
@@ -110,6 +126,11 @@ func main() {
 	}
 
 	if err := startListenForGRPCConnects(errChan); err != nil {
+		logger.Fatal(err)
+		return
+	}
+
+	if err := serveHttpGateway(errChan); err != nil {
 		logger.Fatal(err)
 		return
 	}

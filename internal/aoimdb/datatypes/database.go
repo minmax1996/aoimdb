@@ -7,17 +7,19 @@ import (
 
 //Database Database structure
 type Database struct {
-	Name  string
-	Sets  *Set
-	HSets *HSet
+	Name   string
+	Sets   *Set
+	HSets  *HSet
+	Tables map[string]*Table
 }
 
 // NewDatabase database constructir
 func NewDatabase(name string) *Database {
 	return &Database{
-		Name:  name,
-		Sets:  NewSet(),
-		HSets: NewHSet(),
+		Name:   name,
+		Sets:   NewSet(),
+		HSets:  NewHSet(),
+		Tables: make(map[string]*Table),
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
+	"reflect"
 
 	"github.com/minmax1996/aoimdb/internal/aoimdb/datatypes"
 	"github.com/minmax1996/aoimdb/internal/aoimdb/filestorage"
@@ -136,4 +137,47 @@ func HGet(dbName, key string) (interface{}, error) {
 		return nil, errors.New("database with this name does not exist")
 	}
 	return db.Get(key)
+}
+
+func CreateTable(dbName, tableName string, columNames []string, columTypes []reflect.Kind) error {
+	db, ok := databaseInstance.Databases[dbName]
+	if !ok {
+		return errors.New("database with this name does not exist")
+	}
+	_, ok = db.Tables[tableName]
+	if ok {
+		return errors.New("cant create new table, table already exists")
+	}
+
+	if len(columNames) != len(columTypes) {
+		return errors.New("cant create new table, number params not equal")
+	}
+	db.Tables[tableName] = datatypes.NewTableSchema(tableName, columNames, columTypes)
+	return nil
+}
+
+func InsertIntoTable(dbName, tableName string, columNames []string, values []interface{}) error {
+	table, err := GetTable(dbName, tableName)
+	if err != nil {
+		return err
+	}
+
+	if len(columNames) != len(values) {
+		return errors.New("cant create new table, number params not equal")
+	}
+
+	return table.Insert(columNames, values)
+}
+
+func GetTable(dbName, tableName string) (*datatypes.Table, error) {
+	db, ok := databaseInstance.Databases[dbName]
+	if !ok {
+		return nil, errors.New("database with this name does not exist")
+	}
+	table, ok := db.Tables[tableName]
+	if !ok {
+		return nil, errors.New("cant create new table, table already exists")
+	}
+
+	return table, nil
 }
