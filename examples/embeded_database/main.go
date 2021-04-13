@@ -23,4 +23,8 @@ func main() {
 	fmt.Println(table.Filter(func(m map[string]interface{}) bool {
 		return m["col2"] == "Name2"
 	}).Select([]string{"id"}))
+	table.Delete(func(m map[string]interface{}) bool {
+		return m["col2"] == "Name2"
+	})
+	fmt.Println(table)
 }

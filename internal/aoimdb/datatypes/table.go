@@ -79,7 +79,7 @@ func (t *Table) Filter(filterfunc func(map[string]interface{}) bool) (resultTabl
 		ColumnTypes: t.ColumnTypes,
 		DataRows:    make([]Row, 0),
 	}
-
+	//TODO index
 	//filterfunc will panic if in user input has wrong type convertions
 	for _, v := range t.DataRows {
 		if filterfunc(v.GetMap(t.ColumnNames)) {
@@ -88,6 +88,27 @@ func (t *Table) Filter(filterfunc func(map[string]interface{}) bool) (resultTabl
 	}
 
 	return resultTable
+}
+
+//Delete not sure leave it this way or change later
+func (t *Table) Delete(filterfunc func(map[string]interface{}) bool) (err error) {
+	//we using named return value to properly return resultTable after recover from panic
+	defer func() {
+		recover()
+		err = errors.New("panic recovered")
+	}()
+
+	newDataRows := make([]Row, 0)
+	//filterfunc will panic if in user input has wrong type convertion
+	for _, v := range t.DataRows {
+		//TODO index
+		if !filterfunc(v.GetMap(t.ColumnNames)) {
+			newDataRows = append(newDataRows, v)
+		}
+	}
+	//TODO rewrite index
+	t.DataRows = newDataRows
+	return nil
 }
 
 //Select returns filtered table with only given names in given order
