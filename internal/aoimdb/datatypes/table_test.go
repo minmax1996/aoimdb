@@ -85,3 +85,33 @@ func TestTable_Insert(t *testing.T) {
 		})
 	}
 }
+
+func TestTable_Filter(t *testing.T) {
+	type args struct {
+		filterfunc func(map[string]interface{}) bool
+	}
+	tests := []struct {
+		name string
+		t    *Table
+		args args
+		want *Table
+	}{
+		{"1 filtered",
+			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Kind{reflect.Int, reflect.String}, []Row{{9, "str"}, {22, "str2"}}), args{func(m map[string]interface{}) bool {
+				return m["col1"].(int) < 10 && len(m["col2"].(string)) > 0
+			}},
+			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Kind{reflect.Int, reflect.String}, []Row{{9, "str"}})},
+		{"none filtered, panic recover",
+			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Kind{reflect.Int, reflect.String}, []Row{{9, "str"}, {22, "str2"}}), args{func(m map[string]interface{}) bool {
+				return m["col2"].(int) < 10 && len(m["col1"].(string)) > 0
+			}},
+			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Kind{reflect.Int, reflect.String}, []Row{})},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.t.Filter(tt.args.filterfunc); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Table.Filter() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

@@ -14,6 +14,14 @@ type Table struct {
 	DataRows    []Row
 }
 
+func (r Row) GetMap(cols []string) map[string]interface{} {
+	res := make(map[string]interface{})
+	for i, v := range cols {
+		res[v] = r[i]
+	}
+	return res
+}
+
 //NewTableSchema initialize new table scheam with no data
 func NewTableSchema(tableName string, names []string, types []reflect.Kind) *Table {
 	if len(names) != len(types) {
@@ -57,6 +65,29 @@ func (t *Table) Insert(names []string, values []interface{}) error {
 	t.DataRows = append(t.DataRows, row)
 	//TODO insert indexes here
 	return nil
+}
+
+//Filter filters dataRows by given function
+func (t *Table) Filter(filterfunc func(map[string]interface{}) bool) (resultTable *Table) {
+	//we using named return value to properly return resultTable after recover from panic
+	defer func() {
+		recover()
+	}()
+
+	resultTable = &Table{
+		ColumnNames: t.ColumnNames,
+		ColumnTypes: t.ColumnTypes,
+		DataRows:    make([]Row, 0),
+	}
+
+	//filterfunc will panic if in user input has wrong type convertions
+	for _, v := range t.DataRows {
+		if filterfunc(v.GetMap(t.ColumnNames)) {
+			resultTable.DataRows = append(resultTable.DataRows, v)
+		}
+	}
+
+	return resultTable
 }
 
 //Select returns filtered table with only given names in given order
