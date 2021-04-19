@@ -3,21 +3,24 @@ package datatypes
 import (
 	"errors"
 	"reflect"
+	"sync"
 )
 
 type Row []interface{}
 
 type Table struct {
+	sync.RWMutex
 	Name        string
 	ColumnNames []string
 	ColumnTypes []reflect.Kind
 	DataRows    []Row
+	indexMap    map[string]int
 }
 
-func (r Row) GetMap(cols []string) map[string]interface{} {
-	res := make(map[string]interface{})
-	for i, v := range cols {
-		res[v] = r[i]
+func createIndexMap(collection []string) map[string]int {
+	res := make(map[string]int)
+	for i := 0; i < len(collection); i++ {
+		res[collection[i]] = i
 	}
 	return res
 }
@@ -32,6 +35,7 @@ func NewTableSchema(tableName string, names []string, types []reflect.Kind) *Tab
 		ColumnNames: names,
 		ColumnTypes: types,
 		DataRows:    make([]Row, 0),
+		indexMap:    createIndexMap(names),
 	}
 }
 
@@ -44,6 +48,7 @@ func NewTableWithRows(tableName string, names []string, types []reflect.Kind, ro
 		Name:        tableName,
 		ColumnNames: names,
 		ColumnTypes: types,
+		indexMap:    createIndexMap(names),
 		DataRows:    rows,
 	}
 }
@@ -53,6 +58,8 @@ func (t *Table) Insert(names []string, values []interface{}) error {
 	if len(names) != len(values) {
 		return errors.New("lens not equal")
 	}
+	t.Lock()
+	defer t.Unlock()
 
 	row := make(Row, len(t.ColumnNames))
 	for i, val := range values {
@@ -68,8 +75,10 @@ func (t *Table) Insert(names []string, values []interface{}) error {
 }
 
 //Filter filters dataRows by given function
-func (t *Table) Filter(filterfunc func(map[string]interface{}) bool) (resultTable *Table) {
+func (t *Table) Filter(filterfunc func(Row) bool) (resultTable *Table) {
 	//we using named return value to properly return resultTable after recover from panic
+	t.RLock()
+	defer t.RUnlock()
 	defer func() {
 		recover()
 	}()
@@ -77,12 +86,13 @@ func (t *Table) Filter(filterfunc func(map[string]interface{}) bool) (resultTabl
 	resultTable = &Table{
 		ColumnNames: t.ColumnNames,
 		ColumnTypes: t.ColumnTypes,
-		DataRows:    make([]Row, 0),
+		DataRows:    make([]Row, 0, len(t.DataRows)),
 	}
 	//TODO index
 	//filterfunc will panic if in user input has wrong type convertions
 	for _, v := range t.DataRows {
-		if filterfunc(v.GetMap(t.ColumnNames)) {
+		//filerMap := v.GetMap(t.ColumnNames)
+		if filterfunc(v) {
 			resultTable.DataRows = append(resultTable.DataRows, v)
 		}
 	}
@@ -91,18 +101,19 @@ func (t *Table) Filter(filterfunc func(map[string]interface{}) bool) (resultTabl
 }
 
 //Delete not sure leave it this way or change later
-func (t *Table) Delete(filterfunc func(map[string]interface{}) bool) (err error) {
+func (t *Table) Delete(filterfunc func(Row) bool) (err error) {
 	//we using named return value to properly return resultTable after recover from panic
 	defer func() {
 		recover()
 		err = errors.New("panic recovered")
 	}()
-
+	t.Lock()
+	defer t.Unlock()
 	newDataRows := make([]Row, 0)
 	//filterfunc will panic if in user input has wrong type convertion
 	for _, v := range t.DataRows {
 		//TODO index
-		if !filterfunc(v.GetMap(t.ColumnNames)) {
+		if !filterfunc(v) {
 			newDataRows = append(newDataRows, v)
 		}
 	}
@@ -117,7 +128,8 @@ func (t *Table) Select(names []string) *Table {
 	if len(indexes) == 0 {
 		return nil
 	}
-
+	t.RLock()
+	defer t.RUnlock()
 	//make empty table with fixed lens
 	resultTable := &Table{
 		ColumnNames: make([]string, len(indexes)),

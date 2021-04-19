@@ -86,9 +86,32 @@ func TestTable_Insert(t *testing.T) {
 	}
 }
 
+func BenchmarkInsert(b *testing.B) {
+	table := NewTableSchema("", []string{"col1", "col2"}, []reflect.Kind{reflect.Int, reflect.String})
+	for n := 0; n < b.N; n++ {
+		table.Insert([]string{"col1"}, []interface{}{n})
+	}
+}
+
+func benchmarkFilterDiv(count int, b *testing.B) {
+	table := NewTableSchema("", []string{"col1", "col2"}, []reflect.Kind{reflect.Int, reflect.String})
+	for n := 0; n < count; n++ {
+		table.Insert([]string{"col1"}, []interface{}{n})
+	}
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		table.Filter(func(m Row) bool {
+			return m[0].(int)%2 == 0
+		})
+	}
+}
+
+func BenchmarkFilterDiv10(b *testing.B)  { benchmarkFilterDiv(10, b) }
+func BenchmarkFilterDiv100(b *testing.B) { benchmarkFilterDiv(100, b) }
+
 func TestTable_Filter(t *testing.T) {
 	type args struct {
-		filterfunc func(map[string]interface{}) bool
+		filterfunc func(Row) bool
 	}
 	tests := []struct {
 		name string
@@ -97,13 +120,13 @@ func TestTable_Filter(t *testing.T) {
 		want *Table
 	}{
 		{"1 filtered",
-			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Kind{reflect.Int, reflect.String}, []Row{{9, "str"}, {22, "str2"}}), args{func(m map[string]interface{}) bool {
-				return m["col1"].(int) < 10 && len(m["col2"].(string)) > 0
+			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Kind{reflect.Int, reflect.String}, []Row{{9, "str"}, {22, "str2"}}), args{func(m Row) bool {
+				return m[0].(int) < 10 && len(m[1].(string)) > 0
 			}},
 			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Kind{reflect.Int, reflect.String}, []Row{{9, "str"}})},
 		{"none filtered, panic recover",
-			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Kind{reflect.Int, reflect.String}, []Row{{9, "str"}, {22, "str2"}}), args{func(m map[string]interface{}) bool {
-				return m["col2"].(int) < 10 && len(m["col1"].(string)) > 0
+			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Kind{reflect.Int, reflect.String}, []Row{{9, "str"}, {22, "str2"}}), args{func(m Row) bool {
+				return m[1].(int) < 10 && len(m[0].(string)) > 0
 			}},
 			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Kind{reflect.Int, reflect.String}, []Row{})},
 	}
