@@ -1,7 +1,7 @@
-import { configureStore, ThunkAction, Action } from '@reduxjs/toolkit';
-import counterReducer from '../features/counter/counterSlice';
-import databaseReducer from '../features/database/databaseSlice';
-import webconsoleReduser from '../features/web-console/webconsoleSlice';
+import { configureStore, ThunkAction, Action } from "@reduxjs/toolkit";
+import counterReducer from "../features/counter/counterSlice";
+import databaseReducer from "../features/data-visualizator/databaseSlice";
+import webconsoleReduser from "../features/web-console/webconsoleSlice";
 
 export const store = configureStore({
   reducer: {

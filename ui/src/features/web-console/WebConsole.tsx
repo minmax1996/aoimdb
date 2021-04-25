@@ -1,23 +1,23 @@
-import React, { useState } from 'react'
-import { Collapse } from 'react-bootstrap';
+import React, { useState } from "react";
+import { Collapse } from "react-bootstrap";
 
-import ReactConsole from '@webscopeio/react-console'
-import { useDispatch, useSelector } from 'react-redux'
-import { addKey, clearKeys } from '../database/databaseSlice';
-import { selectIsOpen } from '../../app/store';
+import ReactConsole from "@webscopeio/react-console";
+import { useDispatch, useSelector } from "react-redux";
+import { addKey, clearKeys } from "../data-visualizator/databaseSlice";
+import { selectIsOpen } from "../../app/store";
 
 interface Command {
-    description: string,
-    fn: (...args: any[]) => Promise<any>
+  description: string;
+  fn: (...args: any[]) => Promise<any>;
 }
 
 export default function WebConsole() {
-    const [history, setHistory] = useState<string[]>([])
-    const isOpens = useSelector(selectIsOpen);
-    const dispatch = useDispatch();
-    return (
-      <Collapse in={isOpens}>
-        <div id='br-dark' style={{width: "100%"}}>
+  const [history, setHistory] = useState<string[]>([]);
+  const isOpens = useSelector(selectIsOpen);
+  const dispatch = useDispatch();
+  return (
+    <Collapse in={isOpens}>
+      <div id="br-dark" style={{ width: "100%" }}>
         <ReactConsole
           autoFocus
           prompt=">>>"
@@ -26,42 +26,45 @@ export default function WebConsole() {
           echo args... ; keys ; clearkeys ; history
           "
           // wrapperClassName="bg-dark"
-          wrapperStyle={{textAlign: "left", marginBottom: "10px"}}
+          wrapperStyle={{ textAlign: "left", marginBottom: "10px" }}
           history={history}
-          onAddHistoryItem={(item)=>setHistory([...history, item])}
+          onAddHistoryItem={(item) => setHistory([...history, item])}
           commands={{
-            echo: { 
+            echo: {
               fn: (...args: any[]) => {
                 return new Promise<any>((resolve, _) => {
-                  resolve(`${args.join(' ')}`)
-                  dispatch(addKey(`${args.join(' ')}`))
-                })
-              }
+                  resolve(`${args.join(" ")}`);
+                  dispatch(addKey(`${args.join(" ")}`));
+                });
+              },
             },
-            clearkeys: { 
-              fn: () => { return new Promise<void>(resolve => {
-                  dispatch(clearKeys())
-                  resolve()
-                })
-              }
+            clearkeys: {
+              fn: () => {
+                return new Promise<void>((resolve) => {
+                  dispatch(clearKeys());
+                  resolve();
+                });
+              },
             },
-            keys: { 
-              fn: () => { return new Promise<void>(resolve => {
-                  dispatch(clearKeys())
-                  dispatch(addKey("get keys from database"))
-                  resolve()
-                })
-              }
+            keys: {
+              fn: () => {
+                return new Promise<void>((resolve) => {
+                  dispatch(clearKeys());
+                  dispatch(addKey("get keys from database"));
+                  resolve();
+                });
+              },
             },
             history: {
-              description: 'History',
-              fn: () => new Promise(resolve => {
-                 resolve(`${history.join('\r\n')}`)
-              })
-            }
+              description: "History",
+              fn: () =>
+                new Promise((resolve) => {
+                  resolve(`${history.join("\r\n")}`);
+                }),
+            },
           }}
         />
-        </div>
-      </Collapse>
-    )
-  }
+      </div>
+    </Collapse>
+  );
+}

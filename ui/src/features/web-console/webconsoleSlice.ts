@@ -1,24 +1,22 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 
 interface WebCliState {
-    isOpen: boolean
+  isOpen: boolean;
 }
-  
 
 const initialState: WebCliState = {
-    isOpen: false
+  isOpen: false,
 };
 
-
 export const webconsoleSlice = createSlice({
-    name: 'webconsole',
-    initialState,
-    reducers: {
-      toggleCli: (state) => {
-        state.isOpen = !state.isOpen
-      },
+  name: "webconsole",
+  initialState,
+  reducers: {
+    toggleCli: (state) => {
+      state.isOpen = !state.isOpen;
     },
-  });
+  },
+});
 
 export const { toggleCli } = webconsoleSlice.actions;
 
