@@ -9,14 +9,6 @@ interface Command {
     fn: (...args: any[]) => Promise<any>
 }
 
-function fetchKeys() {
-  return { 
-    types: ["FETCH_KEYS", "FETCH_KEYS_SUCCESS", "FETCH_KEYS_FAILED"],
-    //@ts-ignore
-    swagger: api => api.db.DatabaseController_GetKeys({database_name: '1'})
-  }
-}
-
 export default function WebConsole() {
     const [history, setHistory] = useState<string[]>([])
     const dispatch = useDispatch();
@@ -48,7 +40,6 @@ export default function WebConsole() {
               fn: () => { return new Promise<void>(resolve => {
                   dispatch(clearKeys())
                   dispatch(addKey("get keys from database"))
-                  dispatch(fetchKeys())
                   resolve()
                 })
               }
