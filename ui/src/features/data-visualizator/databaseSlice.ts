@@ -6,7 +6,7 @@ interface Sets {
   value: object;
 }
 
-interface Tables {
+export interface Tables {
   columnNames: string[];
   datas: string[][];
 }
@@ -50,5 +50,6 @@ export const databaseSlice = createSlice({
 export const { addKey, addToSet, clearKeys } = databaseSlice.actions;
 
 export const selectSetKeys = (state: RootState) => state.database.keys;
-
+export const selectSets = (state: RootState) => state.database.sets;
+export const selectTables = (state: RootState) => state.database.tables;
 export default databaseSlice.reducer;

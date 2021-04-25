@@ -1,29 +1,48 @@
 import React, { useState } from "react";
+import { Tab, Table, Tabs } from "react-bootstrap";
 import { useSelector, useDispatch } from "react-redux";
-import { addKey, addToSet, selectSetKeys } from "./databaseSlice";
-import styles from "../counter/Counter.module.css";
+import {
+  selectSetKeys,
+  selectSets,
+  selectTables,
+  Tables,
+} from "./databaseSlice";
 
 export function DataVisualizator() {
   const keys = useSelector(selectSetKeys);
-  //sconst dispatch = useDispatch();
-  // const [keyAmount, setKeyAmount] = useState('');
-  // const [keySetAmount, setSetKeyAmount] = useState('');
+  const sets = useSelector(selectSets);
   return (
     <div>
-      <div className={styles.row}>
-        <p>
-          {" "}
-          <p style={{ fontSize: 22 }}>KEYS: </p>
-          {keys.map((key) => {
-            return (
-              <div>
-                {key}
-                <br />
-              </div>
-            );
-          })}
-        </p>
-      </div>
+      <p>Visualization</p>
+      <Tabs defaultActiveKey="table" id="uncontrolled-tab-example">
+        <Tab eventKey="keys" title="Keys">
+          <p>Keys</p>
+        </Tab>
+        <Tab eventKey="table" title="Tables">
+          {TableVisualizator(useSelector(selectTables))}
+        </Tab>
+      </Tabs>
     </div>
   );
+}
+
+export function TableVisualizator(params: Tables[]) {
+  return params.map((table) => (
+    <Table striped bordered hover>
+      <thead>
+        {table.columnNames.map((col: string) => (
+          <th>{col}</th>
+        ))}
+      </thead>
+      <tbody>
+        {table.datas.map((row: string[]) => (
+          <tr>
+            {row.map((col: string) => (
+              <td>{col}</td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </Table>
+  ));
 }

@@ -29,10 +29,8 @@ function App() {
       <Navbar bg="dark" variant="dark">
         <WebConsole />
       </Navbar>
-      <header className="App-header">
-        {/* <Counter /> */}
-        <DataVisualizator />
-      </header>
+
+      <DataVisualizator />
     </div>
   );
 }
