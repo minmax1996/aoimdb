@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
+import { Collapse } from 'react-bootstrap';
 
 import ReactConsole from '@webscopeio/react-console'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { addKey, clearKeys } from '../database/databaseSlice';
+import { selectIsOpen } from '../../app/store';
 
 interface Command {
     description: string,
@@ -11,13 +13,20 @@ interface Command {
 
 export default function WebConsole() {
     const [history, setHistory] = useState<string[]>([])
+    const isOpens = useSelector(selectIsOpen);
     const dispatch = useDispatch();
     return (
-      <div>
+      <Collapse in={isOpens}>
+        <div id='br-dark' style={{width: "100%"}}>
         <ReactConsole
           autoFocus
-          welcomeMessage="Welcome"
-          lineStyle={{textAlign: "left"}}
+          prompt=">>>"
+          welcomeMessage="Welcome to Cli
+          available commands: 
+          echo args... ; keys ; clearkeys ; history
+          "
+          // wrapperClassName="bg-dark"
+          wrapperStyle={{textAlign: "left", marginBottom: "10px"}}
           history={history}
           onAddHistoryItem={(item)=>setHistory([...history, item])}
           commands={{
@@ -52,6 +61,7 @@ export default function WebConsole() {
             }
           }}
         />
-      </div>
+        </div>
+      </Collapse>
     )
   }
