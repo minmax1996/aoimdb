@@ -14,15 +14,6 @@ type Table struct {
 	ColumnNames []string
 	ColumnTypes []reflect.Kind
 	DataRows    []Row
-	indexMap    map[string]int
-}
-
-func createIndexMap(collection []string) map[string]int {
-	res := make(map[string]int)
-	for i := 0; i < len(collection); i++ {
-		res[collection[i]] = i
-	}
-	return res
 }
 
 //NewTableSchema initialize new table scheam with no data
@@ -35,7 +26,6 @@ func NewTableSchema(tableName string, names []string, types []reflect.Kind) *Tab
 		ColumnNames: names,
 		ColumnTypes: types,
 		DataRows:    make([]Row, 0),
-		indexMap:    createIndexMap(names),
 	}
 }
 
@@ -48,7 +38,6 @@ func NewTableWithRows(tableName string, names []string, types []reflect.Kind, ro
 		Name:        tableName,
 		ColumnNames: names,
 		ColumnTypes: types,
-		indexMap:    createIndexMap(names),
 		DataRows:    rows,
 	}
 }
