@@ -87,7 +87,18 @@ func TestTable_Insert(t *testing.T) {
 }
 
 func BenchmarkInsert(b *testing.B) {
-	table := NewTableSchema("", []string{"col1", "col2"}, []reflect.Kind{reflect.Int, reflect.String})
+	table := NewTableSchema("",
+		[]string{"col1", "col2"},
+		[]reflect.Kind{reflect.Int, reflect.String})
+	for n := 0; n < b.N; n++ {
+		table.Insert([]string{"col1"}, []interface{}{n})
+	}
+}
+
+func BenchmarkInsertWithMapIndex(b *testing.B) {
+	table := NewTableSchema("",
+		[]string{"col1", "col2"},
+		[]reflect.Kind{reflect.Int, reflect.String}, NewMapUnicIndex(0, "col1"))
 	for n := 0; n < b.N; n++ {
 		table.Insert([]string{"col1"}, []interface{}{n})
 	}
@@ -106,8 +117,38 @@ func benchmarkFilterDiv(count int, b *testing.B) {
 	}
 }
 
-func BenchmarkFilterDiv10(b *testing.B)  { benchmarkFilterDiv(10, b) }
-func BenchmarkFilterDiv100(b *testing.B) { benchmarkFilterDiv(100, b) }
+func BenchmarkFilterDiv10(b *testing.B)    { benchmarkFilterDiv(10, b) }
+func BenchmarkFilterDiv100(b *testing.B)   { benchmarkFilterDiv(100, b) }
+func BenchmarkFilterDiv10000(b *testing.B) { benchmarkFilterDiv(10000, b) }
+
+func benchmarkFilterByValue(count int, b *testing.B) {
+	table := NewTableSchema("",
+		[]string{"col1", "col2"},
+		[]reflect.Kind{reflect.Int, reflect.String})
+	for n := 0; n < count; n++ {
+		table.Insert([]string{"col1"}, []interface{}{n})
+	}
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		table.FilterByValue("col1", 100)
+	}
+}
+
+func benchmarkFilterByValueIndex(count int, b *testing.B) {
+	table := NewTableSchema("",
+		[]string{"col1", "col2"},
+		[]reflect.Kind{reflect.Int, reflect.String}, NewMapUnicIndex(0, "col1"))
+	for n := 0; n < count; n++ {
+		table.Insert([]string{"col1"}, []interface{}{n})
+	}
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		table.FilterByValue("col1", count-1)
+	}
+}
+
+func BenchmarkFilterByValue10000(b *testing.B)      { benchmarkFilterByValue(10000, b) }
+func BenchmarkFilterByValueIndex10000(b *testing.B) { benchmarkFilterByValueIndex(10000, b) }
 
 func TestTable_Filter(t *testing.T) {
 	type args struct {
