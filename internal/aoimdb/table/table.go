@@ -26,6 +26,7 @@ type exportTable struct {
 	ColumnNames []string
 	ColumnTypes []string
 	DataRows    []Row
+	Indexes     []TableIndex
 }
 
 func (t *Table) MarshalBinary() ([]byte, error) {
@@ -64,7 +65,7 @@ func (t *Table) UnmarshalBinary(data []byte) error {
 }
 
 //NewTableSchema initialize new table scheam with no data
-func NewTableSchema(tableName string, names []string, types []datatypes.Datatype) *Table {
+func NewTableSchema(tableName string, names []string, types []reflect.Kind, ti ...TableIndex) *Table {
 	if len(names) != len(types) {
 		return nil
 	}
@@ -73,11 +74,12 @@ func NewTableSchema(tableName string, names []string, types []datatypes.Datatype
 		ColumnNames: names,
 		ColumnTypes: types,
 		DataRows:    make([]Row, 0),
+		Indexes:     ti,
 	}
 }
 
 //NewTableWithRows initailexe new table with rows
-func NewTableWithRows(tableName string, names []string, types []datatypes.Datatype, rows []Row) *Table {
+func NewTableWithRows(tableName string, names []string, types []reflect.Kind, rows []Row, ti ...TableIndex) *Table {
 	if len(names) != len(types) {
 		return nil
 	}
@@ -87,6 +89,15 @@ func NewTableWithRows(tableName string, names []string, types []datatypes.Dataty
 		ColumnTypes: types,
 		DataRows:    rows,
 	}
+}
+
+func (t *Table) AddIndex(ti TableIndex) {
+	t.RLock()
+	defer t.RLock()
+	for _, v := range t.DataRows {
+		ti.AddToIndex(&v)
+	}
+	t.Indexes = append(t.Indexes, ti)
 }
 
 //Insert inserts into rows new row with values if values pass typecheck
@@ -114,8 +125,11 @@ func (t *Table) Insert(names []string, values []interface{}) error {
 			row[ind] = val
 		}
 	}
+	// Populate indexes
+	for _, v := range t.Indexes {
+		v.AddToIndex(&row)
+	}
 	t.DataRows = append(t.DataRows, row)
-	//TODO insert indexes here
 	return nil
 }
 
@@ -133,11 +147,58 @@ func (t *Table) Filter(filterfunc func(Row) bool) (resultTable *Table) {
 		ColumnTypes: t.ColumnTypes,
 		DataRows:    make([]Row, 0, len(t.DataRows)),
 	}
-	//TODO index
+
+	// for _, idx := range t.Indexes {
+	// 	rows, err := idx.Find(func(key interface{}) bool {
+
+	// 	})
+	// 	if err == nil {
+	// 		resultTable.DataRows = append(resultTable.DataRows, rows...)
+	// 		return resultTable
+	// 	}
+	// }
+
 	//filterfunc will panic if in user input has wrong type convertions
 	for _, v := range t.DataRows {
 		//filerMap := v.GetMap(t.ColumnNames)
 		if filterfunc(v) {
+			resultTable.DataRows = append(resultTable.DataRows, v)
+		}
+	}
+
+	return resultTable
+}
+
+//Filter filters dataRows by given function
+func (t *Table) FilterByValue(colName string, value interface{}) (resultTable *Table) {
+	//we using named return value to properly return resultTable after recover from panic
+	t.RLock()
+	defer t.RUnlock()
+	defer func() {
+		recover()
+	}()
+
+	resultTable = &Table{
+		ColumnNames: t.ColumnNames,
+		ColumnTypes: t.ColumnTypes,
+		DataRows:    make([]Row, 0, len(t.DataRows)),
+	}
+
+	for _, idx := range t.Indexes {
+		if idx.ColName() == colName {
+			rows, err := idx.FindByValue(value)
+			if err == nil {
+				resultTable.DataRows = append(resultTable.DataRows, rows...)
+				return resultTable
+			}
+		}
+	}
+
+	//filterfunc will panic if in user input has wrong type convertions
+	inxd := findIndex(t.ColumnNames, colName)
+	for _, v := range t.DataRows {
+		//filerMap := v.GetMap(t.ColumnNames)
+		if v[inxd] == value {
 			resultTable.DataRows = append(resultTable.DataRows, v)
 		}
 	}
