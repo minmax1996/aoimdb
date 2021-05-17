@@ -1,7 +1,9 @@
 package datatypes
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"reflect"
 	"sync"
 )
@@ -14,6 +16,21 @@ type Table struct {
 	ColumnNames []string
 	ColumnTypes []reflect.Kind
 	DataRows    []Row
+}
+
+func (t *Table) MarshalBinary() ([]byte, error) {
+	// A simple encoding: plain text.
+	var b bytes.Buffer
+	fmt.Fprintln(&b, t.Name, t.ColumnNames, t.ColumnTypes, t.DataRows)
+	return b.Bytes(), nil
+}
+
+// UnmarshalBinary modifies the receiver so it must take a pointer receiver.
+func (t *Table) UnmarshalBinary(data []byte) error {
+	// A simple encoding: plain text.
+	b := bytes.NewBuffer(data)
+	_, err := fmt.Fscanln(b, &t.Name, &t.ColumnNames, &t.ColumnTypes, &t.DataRows)
+	return err
 }
 
 //NewTableSchema initialize new table scheam with no data
