@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"sync"
 )
 
@@ -14,7 +15,7 @@ type Table struct {
 	sync.RWMutex
 	Name        string
 	ColumnNames []string
-	ColumnTypes []reflect.Kind
+	ColumnTypes []reflect.Type
 	DataRows    []Row
 }
 
@@ -34,7 +35,7 @@ func (t *Table) UnmarshalBinary(data []byte) error {
 }
 
 //NewTableSchema initialize new table scheam with no data
-func NewTableSchema(tableName string, names []string, types []reflect.Kind) *Table {
+func NewTableSchema(tableName string, names []string, types []reflect.Type) *Table {
 	if len(names) != len(types) {
 		return nil
 	}
@@ -47,7 +48,7 @@ func NewTableSchema(tableName string, names []string, types []reflect.Kind) *Tab
 }
 
 //NewTableWithRows initailexe new table with rows
-func NewTableWithRows(tableName string, names []string, types []reflect.Kind, rows []Row) *Table {
+func NewTableWithRows(tableName string, names []string, types []reflect.Type, rows []Row) *Table {
 	if len(names) != len(types) {
 		return nil
 	}
@@ -61,6 +62,7 @@ func NewTableWithRows(tableName string, names []string, types []reflect.Kind, ro
 
 //Insert inserts into rows new row with values if values pass typecheck
 func (t *Table) Insert(names []string, values []interface{}) error {
+	var err error
 	if len(names) != len(values) {
 		return errors.New("lens not equal")
 	}
@@ -70,14 +72,66 @@ func (t *Table) Insert(names []string, values []interface{}) error {
 	row := make(Row, len(t.ColumnNames))
 	for i, val := range values {
 		ind := findIndex(t.ColumnNames, names[i])
-		if ind == -1 || reflect.TypeOf(val).Kind() != t.ColumnTypes[ind] {
-			return errors.New("cant append value")
+		if ind == -1 {
+			return errors.New("cant find index")
 		}
-		row[ind] = val
+
+		if reflect.TypeOf(val) != t.ColumnTypes[ind] {
+			row[ind], err = convertToColumnType(val, t.ColumnTypes[ind].Kind())
+			if err != nil {
+				return err
+			}
+		} else {
+			row[ind] = val
+		}
 	}
 	t.DataRows = append(t.DataRows, row)
 	//TODO insert indexes here
 	return nil
+}
+
+func convertToColumnType(value interface{}, resultType reflect.Kind) (interface{}, error) {
+	switch v := value.(type) {
+	case string:
+		switch resultType {
+		case reflect.String:
+			return v, nil
+		case reflect.Int:
+			if c, err := strconv.ParseInt(v, 10, 32); err != nil {
+				return nil, err
+			} else {
+				return int(c), err
+			}
+		case reflect.Int32:
+			if c, err := strconv.ParseInt(v, 10, 32); err != nil {
+				return nil, err
+			} else {
+				return int32(c), err
+			}
+		case reflect.Int64:
+			if c, err := strconv.ParseInt(v, 10, 64); err != nil {
+				return nil, err
+			} else {
+				return int64(c), err
+			}
+		case reflect.Float32:
+			if c, err := strconv.ParseFloat(v, 32); err != nil {
+				return nil, err
+			} else {
+				return float32(c), err
+			}
+		case reflect.Float64:
+			if c, err := strconv.ParseFloat(v, 64); err != nil {
+				return nil, err
+			} else {
+				return float64(c), err
+			}
+		default:
+			return nil, errors.New("unknown reflect type")
+		}
+	default:
+		return nil, errors.New("unknown type")
+	}
 }
 
 //Filter filters dataRows by given function
@@ -139,7 +193,7 @@ func (t *Table) Select(names []string) *Table {
 	//make empty table with fixed lens
 	resultTable := &Table{
 		ColumnNames: make([]string, len(indexes)),
-		ColumnTypes: make([]reflect.Kind, len(indexes)),
+		ColumnTypes: make([]reflect.Type, len(indexes)),
 		DataRows:    make([]Row, len(t.DataRows)),
 	}
 

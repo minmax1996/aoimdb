@@ -35,6 +35,12 @@ func (db *Database) Keys(keysPattern string) []string {
 			result = append(result, fmt.Sprintf("HSET %s.%s", db.Name, k))
 		}
 	}
+
+	for k := range db.Tables {
+		if matched, _ := regexp.MatchString(keysPattern, k); matched {
+			result = append(result, fmt.Sprintf("TABLE %s.%s", db.Name, k))
+		}
+	}
 	return result
 }
 

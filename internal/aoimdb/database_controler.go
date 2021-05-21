@@ -139,7 +139,7 @@ func HGet(dbName, key string) (interface{}, error) {
 	return db.Get(key)
 }
 
-func CreateTable(dbName, tableName string, columNames []string, columTypes []reflect.Kind) error {
+func CreateTable(dbName, tableName string, columNames []string, columTypes []reflect.Type) error {
 	db, ok := databaseInstance.Databases[dbName]
 	if !ok {
 		return errors.New("database with this name does not exist")
@@ -162,11 +162,16 @@ func InsertIntoTable(dbName, tableName string, columNames []string, values []int
 		return err
 	}
 
-	if len(columNames) != len(values) {
-		return errors.New("cant create new table, number params not equal")
+	return table.Insert(columNames, values)
+}
+
+func SelectFromTable(dbName, tableName string, columNames []string) *datatypes.Table {
+	table, err := GetTable(dbName, tableName)
+	if err != nil {
+		return nil
 	}
 
-	return table.Insert(columNames, values)
+	return table.Select(columNames)
 }
 
 func GetTable(dbName, tableName string) (*datatypes.Table, error) {

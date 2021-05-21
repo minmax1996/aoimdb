@@ -2,6 +2,7 @@ package tcpconnect
 
 import (
 	"errors"
+	"reflect"
 	"strings"
 
 	"github.com/minmax1996/aoimdb/api/commands"
@@ -23,6 +24,12 @@ func (c *Client) Handle(command commands.Commander, args []string) error {
 		return c.GetHandler(args...)
 	case cmd == "set" && c.SessionData.authenticated:
 		return c.SetHandler(args...)
+	case cmd == "tcreate" && c.SessionData.authenticated:
+		return c.CreateTableHandler(args...)
+	case cmd == "tinsert" && c.SessionData.authenticated:
+		return c.InsertIntoTableHandler(args...)
+	case cmd == "tselect" && c.SessionData.authenticated:
+		return c.SelectFromTableHandler(args...)
 	case cmd == "exit":
 		return c.ExitHandler(args...)
 	case !c.SessionData.authenticated:
@@ -119,6 +126,125 @@ func (c *Client) SetHandler(s ...string) error {
 	c.Write(&msg_protocol.MsgPackRootMessage{
 		SetResponse: &msg_protocol.SetResponse{
 			Message: "ok",
+		},
+	})
+	return nil
+}
+
+//Send sends command string to establised connection
+func (c *Client) CreateTableHandler(s ...string) error {
+	selectedDatabase := c.SessionData.selectedDatabase
+	tableName := s[0]
+
+	if strings.Contains(tableName, ".") {
+		splited := strings.Split(tableName, ".")
+		selectedDatabase, tableName = splited[0], splited[1]
+	}
+
+	if len(selectedDatabase) == 0 {
+		return errors.New("database not selected")
+	}
+
+	db.SelectDatabase(selectedDatabase)
+
+	var columnNames []string
+	var columnTypes []reflect.Type
+
+	for _, v := range s[1:] {
+		splitted := strings.Split(v, ":")
+		if len(splitted) != 2 {
+			continue
+		}
+		columnNames = append(columnNames, splitted[0])
+		switch splitted[1] {
+		case "int32":
+			columnTypes = append(columnTypes, reflect.TypeOf(int32(1)))
+		case "string":
+			columnTypes = append(columnTypes, reflect.TypeOf(""))
+		case "float32":
+			columnTypes = append(columnTypes, reflect.TypeOf(1.0))
+		default:
+			columnTypes = append(columnTypes, reflect.TypeOf(""))
+		}
+	}
+
+	err := db.CreateTable(selectedDatabase, tableName, columnNames, columnTypes)
+	if err != nil {
+		return err
+	}
+
+	c.Write(&msg_protocol.MsgPackRootMessage{
+		CreateTableResponse: &msg_protocol.CreateTableResponse{
+			Message: "ok",
+		},
+	})
+	return nil
+}
+
+//Send sends command string to establised connection
+func (c *Client) InsertIntoTableHandler(s ...string) error {
+	selectedDatabase := c.SessionData.selectedDatabase
+	tableName := s[0]
+
+	if strings.Contains(tableName, ".") {
+		splited := strings.Split(tableName, ".")
+		selectedDatabase, tableName = splited[0], splited[1]
+	}
+
+	if len(selectedDatabase) == 0 {
+		return errors.New("database not selected")
+	}
+
+	db.SelectDatabase(selectedDatabase)
+	columnNames := strings.Split(s[1], ":")
+
+	//values := make([]interface{}, 0, len(s[2:]))
+	for _, v := range s[2:] {
+		splitted := strings.Split(v, ":")
+		row := make([]interface{}, 0, len(splitted))
+		for _, ss := range splitted {
+			row = append(row, ss)
+		}
+		//we can pass interface{} to rows by string
+		err := db.InsertIntoTable(selectedDatabase, tableName, columnNames, row)
+		if err != nil {
+			return nil
+		}
+	}
+
+	c.Write(&msg_protocol.MsgPackRootMessage{
+		InsertTableResponse: &msg_protocol.InsertTableResponse{
+			Message: "ok",
+		},
+	})
+	return nil
+}
+
+//Send sends command string to establised connection
+func (c *Client) SelectFromTableHandler(s ...string) error {
+	selectedDatabase := c.SessionData.selectedDatabase
+	tableName := s[0]
+
+	if strings.Contains(tableName, ".") {
+		splited := strings.Split(tableName, ".")
+		selectedDatabase, tableName = splited[0], splited[1]
+	}
+
+	if len(selectedDatabase) == 0 {
+		return errors.New("database not selected")
+	}
+
+	db.SelectDatabase(selectedDatabase)
+
+	table := db.SelectFromTable(selectedDatabase, tableName, s[1:])
+	if table == nil {
+		return nil
+	}
+
+	c.Write(&msg_protocol.MsgPackRootMessage{
+		SelectTableResponse: &msg_protocol.SelectTableResponse{
+			FieldNames: table.ColumnNames,
+			Rows:       table.DataRows,
 		},
 	})
 	return nil

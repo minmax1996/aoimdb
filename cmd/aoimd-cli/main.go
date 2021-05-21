@@ -29,6 +29,9 @@ func init() {
 	commands.RegisterCommand(commands.NewSelectCommand(Send))
 	commands.RegisterCommand(commands.NewGetCommand(Send))
 	commands.RegisterCommand(commands.NewSetCommand(Send))
+	commands.RegisterCommand(commands.NewCreateTableCommand(Send))
+	commands.RegisterCommand(commands.NewInsertIntoTableCommand(Send))
+	commands.RegisterCommand(commands.NewSelectFromTableCommand(Send))
 	commands.RegisterCommand(commands.NewKeysCommand(Send))
 	commands.RegisterCommand(commands.NewExitCommand(Send))
 
@@ -143,6 +146,12 @@ func startListenResponses() {
 				fmt.Println(*item.SetResponse)
 			case item.KeysResponse != nil:
 				fmt.Println(*item.KeysResponse)
+			case item.CreateTableResponse != nil:
+				fmt.Println(item.CreateTableResponse.Message)
+			case item.InsertTableResponse != nil:
+				fmt.Println(item.InsertTableResponse.Message)
+			case item.SelectTableResponse != nil:
+				fmt.Println(*item.SelectTableResponse)
 			default:
 				fmt.Println(item.Message)
 			}

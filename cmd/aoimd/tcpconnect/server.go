@@ -30,6 +30,9 @@ func CreateTCPServer(errChan chan error) *TCPServer {
 	commands.RegisterCommand(commands.NewSetCommand(nil))
 	commands.RegisterCommand(commands.NewKeysCommand(nil))
 	commands.RegisterCommand(commands.NewExitCommand(nil))
+	commands.RegisterCommand(commands.NewCreateTableCommand(nil))
+	commands.RegisterCommand(commands.NewInsertIntoTableCommand(nil))
+	commands.RegisterCommand(commands.NewSelectFromTableCommand(nil))
 
 	ser.Listen()
 
