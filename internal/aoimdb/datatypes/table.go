@@ -2,10 +2,9 @@ package datatypes
 
 import (
 	"bytes"
+	"encoding/gob"
 	"errors"
-	"fmt"
 	"reflect"
-	"strconv"
 	"sync"
 )
 
@@ -19,19 +18,45 @@ type Table struct {
 	DataRows    []Row
 }
 
+type exportTable struct {
+	Name        string
+	ColumnNames []string
+	ColumnTypes []string
+	DataRows    []Row
+}
+
 func (t *Table) MarshalBinary() ([]byte, error) {
-	// A simple encoding: plain text.
-	var b bytes.Buffer
-	fmt.Fprintln(&b, t.Name, t.ColumnNames, t.ColumnTypes, t.DataRows)
-	return b.Bytes(), nil
+	export := exportTable{
+		Name:        t.Name,
+		ColumnNames: t.ColumnNames,
+		ColumnTypes: make([]string, 0, len(t.ColumnTypes)),
+		DataRows:    t.DataRows,
+	}
+	for _, v := range t.ColumnTypes {
+		export.ColumnTypes = append(export.ColumnTypes, ToString(v))
+	}
+
+	buf := bytes.Buffer{}
+	if err := gob.NewEncoder(&buf).Encode(export); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 // UnmarshalBinary modifies the receiver so it must take a pointer receiver.
 func (t *Table) UnmarshalBinary(data []byte) error {
-	// A simple encoding: plain text.
-	b := bytes.NewBuffer(data)
-	_, err := fmt.Fscanln(b, &t.Name, &t.ColumnNames, &t.ColumnTypes, &t.DataRows)
-	return err
+	var export exportTable
+	if err := gob.NewDecoder(bytes.NewReader(data)).Decode(&export); err != nil {
+		return err
+	}
+	t.Name = export.Name
+	t.ColumnNames = export.ColumnNames
+	t.ColumnTypes = make([]reflect.Type, 0, len(t.ColumnTypes))
+	t.DataRows = export.DataRows
+	for _, v := range export.ColumnTypes {
+		t.ColumnTypes = append(t.ColumnTypes, FromString(v))
+	}
+	return nil
 }
 
 //NewTableSchema initialize new table scheam with no data
@@ -77,7 +102,7 @@ func (t *Table) Insert(names []string, values []interface{}) error {
 		}
 
 		if reflect.TypeOf(val) != t.ColumnTypes[ind] {
-			row[ind], err = convertToColumnType(val, t.ColumnTypes[ind].Kind())
+			row[ind], err = ConvertToColumnType(val, t.ColumnTypes[ind].Kind())
 			if err != nil {
 				return err
 			}
@@ -88,50 +113,6 @@ func (t *Table) Insert(names []string, values []interface{}) error {
 	t.DataRows = append(t.DataRows, row)
 	//TODO insert indexes here
 	return nil
-}
-
-func convertToColumnType(value interface{}, resultType reflect.Kind) (interface{}, error) {
-	switch v := value.(type) {
-	case string:
-		switch resultType {
-		case reflect.String:
-			return v, nil
-		case reflect.Int:
-			if c, err := strconv.ParseInt(v, 10, 32); err != nil {
-				return nil, err
-			} else {
-				return int(c), err
-			}
-		case reflect.Int32:
-			if c, err := strconv.ParseInt(v, 10, 32); err != nil {
-				return nil, err
-			} else {
-				return int32(c), err
-			}
-		case reflect.Int64:
-			if c, err := strconv.ParseInt(v, 10, 64); err != nil {
-				return nil, err
-			} else {
-				return int64(c), err
-			}
-		case reflect.Float32:
-			if c, err := strconv.ParseFloat(v, 32); err != nil {
-				return nil, err
-			} else {
-				return float32(c), err
-			}
-		case reflect.Float64:
-			if c, err := strconv.ParseFloat(v, 64); err != nil {
-				return nil, err
-			} else {
-				return float64(c), err
-			}
-		default:
-			return nil, errors.New("unknown reflect type")
-		}
-	default:
-		return nil, errors.New("unknown type")
-	}
 }
 
 //Filter filters dataRows by given function

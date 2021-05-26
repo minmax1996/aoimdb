@@ -15,28 +15,28 @@ func TestTable_Select(t *testing.T) {
 		args args
 		want *Table
 	}{
-		{"error select", NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}), args{[]string{"col3"}}, nil},
+		{"error select", NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{Int, String}), args{[]string{"col3"}}, nil},
 		{"1 col select",
-			NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}), args{[]string{"col1"}},
-			NewTableSchema("", []string{"col1"}, []reflect.Type{reflect.TypeOf(1)})},
+			NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{Int, String}), args{[]string{"col1"}},
+			NewTableSchema("", []string{"col1"}, []reflect.Type{Int})},
 		{"2 col select",
-			NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}), args{[]string{"col1", "col2"}},
-			NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")})},
+			NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{Int, String}), args{[]string{"col1", "col2"}},
+			NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{Int, String})},
 		{"3 col select",
-			NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}), args{[]string{"col1", "col2", "col3"}},
-			NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")})},
+			NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{Int, String}), args{[]string{"col1", "col2", "col3"}},
+			NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{Int, String})},
 		{"1 col select withRows",
-			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}, []Row{{11, "str"}, {22, "str2"}}), args{[]string{"col1"}},
-			NewTableWithRows("", []string{"col1"}, []reflect.Type{reflect.TypeOf(1)}, []Row{{11}, {22}})},
+			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{Int, String}, []Row{{11, "str"}, {22, "str2"}}), args{[]string{"col1"}},
+			NewTableWithRows("", []string{"col1"}, []reflect.Type{Int}, []Row{{11}, {22}})},
 		{"2 col select  withRows",
-			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}, []Row{{11, "str"}, {22, "str2"}}), args{[]string{"col1", "col2"}},
-			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}, []Row{{11, "str"}, {22, "str2"}})},
+			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{Int, String}, []Row{{11, "str"}, {22, "str2"}}), args{[]string{"col1", "col2"}},
+			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{Int, String}, []Row{{11, "str"}, {22, "str2"}})},
 		{"3 col select withRows",
-			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}, []Row{{11, "str"}, {22, "str2"}}), args{[]string{"col1", "col2", "col3"}},
-			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}, []Row{{11, "str"}, {22, "str2"}})},
+			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{Int, String}, []Row{{11, "str"}, {22, "str2"}}), args{[]string{"col1", "col2", "col3"}},
+			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{Int, String}, []Row{{11, "str"}, {22, "str2"}})},
 		{"3 col select withRows in reverse order",
-			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}, []Row{{11, "str"}, {22, "str2"}}), args{[]string{"col2", "col1"}},
-			NewTableWithRows("", []string{"col2", "col1"}, []reflect.Type{reflect.TypeOf(""), reflect.TypeOf(1)}, []Row{{"str", 11}, {"str2", 22}})},
+			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{Int, String}, []Row{{11, "str"}, {22, "str2"}}), args{[]string{"col2", "col1"}},
+			NewTableWithRows("", []string{"col2", "col1"}, []reflect.Type{String, Int}, []Row{{"str", 11}, {"str2", 22}})},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -59,20 +59,32 @@ func TestTable_Insert(t *testing.T) {
 		want    *Table
 		wantErr bool
 	}{
-		{"example1", NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}), args{[]string{"col1", "col2"}, []interface{}{12, "abcd"}},
-			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}, []Row{{12, "abcd"}}), false},
-		{"with reverse order", NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}), args{[]string{"col2", "col1"}, []interface{}{"abcd", 12}},
-			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}, []Row{{12, "abcd"}}), false},
-		{"with move columns", NewTableSchema("", []string{"col1", "col2", "col3", "col4"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf(""), reflect.TypeOf(1), reflect.TypeOf(1)}), args{[]string{"col2", "col1"}, []interface{}{"abcd", 12}},
-			NewTableWithRows("", []string{"col1", "col2", "col3", "col4"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf(""), reflect.TypeOf(1), reflect.TypeOf(1)}, []Row{{12, "abcd", nil, nil}}), false},
-		{"with move columns", NewTableSchema("", []string{"col1", "col2", "col3", "col4"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf(""), reflect.TypeOf(1), reflect.TypeOf(1)}), args{[]string{"col2", "col1"}, []interface{}{"abcd", 12}},
-			NewTableWithRows("", []string{"col1", "col2", "col3", "col4"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf(""), reflect.TypeOf(1), reflect.TypeOf(1)}, []Row{{12, "abcd", nil, nil}}), false},
-		{"ErrInLengths", NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}), args{[]string{"col1", "col2"}, []interface{}{12, "abcd", "324"}},
-			NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}), true},
-		{"ErrInNotFoundIndex", NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}), args{[]string{"col1", "col3"}, []interface{}{12, "abcd"}},
-			NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}), true},
-		{"exampleFromAllStrings", NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}), args{[]string{"col1", "col2"}, []interface{}{"12", "abcd"}},
-			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}, []Row{{12, "abcd"}}), false},
+		{"example1", NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{Int, String}), args{[]string{"col1", "col2"},
+			[]interface{}{12, "abcd"}},
+			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{Int, String},
+				[]Row{{12, "abcd"}}), false},
+		{"with reverse order", NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{Int, String}), args{[]string{"col2", "col1"},
+			[]interface{}{"abcd", 12}},
+			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{Int, String},
+				[]Row{{12, "abcd"}}), false},
+		{"with move columns", NewTableSchema("", []string{"col1", "col2", "col3", "col4"}, []reflect.Type{Int, String, Int, Int}), args{[]string{"col2", "col1"},
+			[]interface{}{"abcd", 12}},
+			NewTableWithRows("", []string{"col1", "col2", "col3", "col4"}, []reflect.Type{Int, String, Int, Int},
+				[]Row{{12, "abcd", nil, nil}}), false},
+		{"with move columns", NewTableSchema("", []string{"col1", "col2", "col3", "col4"}, []reflect.Type{Int, String, Int, Int}), args{[]string{"col2", "col1"},
+			[]interface{}{"abcd", 12}},
+			NewTableWithRows("", []string{"col1", "col2", "col3", "col4"}, []reflect.Type{Int, String, Int, Int},
+				[]Row{{12, "abcd", nil, nil}}), false},
+		{"ErrInLengths", NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{Int, String}), args{[]string{"col1", "col2"},
+			[]interface{}{12, "abcd", "324"}},
+			NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{Int, String}), true},
+		{"ErrInNotFoundIndex", NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{Int, String}), args{[]string{"col1", "col3"},
+			[]interface{}{12, "abcd"}},
+			NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{Int, String}), true},
+		{"exampleFromAllStrings", NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{Int, String}), args{[]string{"col1", "col2"},
+			[]interface{}{"12", "abcd"}},
+			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{Int, String},
+				[]Row{{12, "abcd"}}), false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -81,21 +93,20 @@ func TestTable_Insert(t *testing.T) {
 			}
 			if !reflect.DeepEqual(tt.t, tt.want) {
 				t.Errorf("Table.NotEqual() = %v, want %v", tt.t, tt.want)
-				t.Errorf("%T %T", tt.t.DataRows[0][0], tt.want.DataRows[0][0])
 			}
 		})
 	}
 }
 
 func BenchmarkInsert(b *testing.B) {
-	table := NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")})
+	table := NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{Int, String})
 	for n := 0; n < b.N; n++ {
 		table.Insert([]string{"col1"}, []interface{}{n})
 	}
 }
 
 func benchmarkFilterDiv(count int, b *testing.B) {
-	table := NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")})
+	table := NewTableSchema("", []string{"col1", "col2"}, []reflect.Type{Int, String})
 	for n := 0; n < count; n++ {
 		table.Insert([]string{"col1"}, []interface{}{n})
 	}
@@ -121,15 +132,15 @@ func TestTable_Filter(t *testing.T) {
 		want *Table
 	}{
 		{"1 filtered",
-			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}, []Row{{9, "str"}, {22, "str2"}}), args{func(m Row) bool {
+			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{Int, String}, []Row{{9, "str"}, {22, "str2"}}), args{func(m Row) bool {
 				return m[0].(int) < 10 && len(m[1].(string)) > 0
 			}},
-			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}, []Row{{9, "str"}})},
+			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{Int, String}, []Row{{9, "str"}})},
 		{"none filtered, panic recover",
-			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}, []Row{{9, "str"}, {22, "str2"}}), args{func(m Row) bool {
+			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{Int, String}, []Row{{9, "str"}, {22, "str2"}}), args{func(m Row) bool {
 				return m[1].(int) < 10 && len(m[0].(string)) > 0
 			}},
-			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{reflect.TypeOf(1), reflect.TypeOf("")}, []Row{})},
+			NewTableWithRows("", []string{"col1", "col2"}, []reflect.Type{Int, String}, []Row{})},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
