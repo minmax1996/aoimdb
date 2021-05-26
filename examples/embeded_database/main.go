@@ -14,7 +14,7 @@ func main() {
 	aoimdb.SelectDatabase("default")
 	aoimdb.CreateTable("default", "newTable",
 		[]string{"id", "name"},
-		[]reflect.Kind{reflect.Int, reflect.String})
+		[]reflect.Type{datatypes.Int, datatypes.String})
 
 	table, _ := aoimdb.GetTable("default", "newTable")
 
