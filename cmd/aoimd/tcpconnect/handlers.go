@@ -208,6 +208,11 @@ func (c *Client) InsertIntoTableHandler(s ...string) error {
 		//we can pass interface{} to rows by string
 		err := db.InsertIntoTable(selectedDatabase, tableName, columnNames, row)
 		if err != nil {
+			c.Write(&msg_protocol.MsgPackRootMessage{
+				InsertTableResponse: &msg_protocol.InsertTableResponse{
+					Message: err.Error(),
+				},
+			})
 			return nil
 		}
 	}

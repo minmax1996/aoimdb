@@ -93,15 +93,15 @@ func NewCreateTableCommand(callback func(string, ...string) error) Commander {
 
 //NewInsertIntoTableCommand constructor standart server commands
 func NewInsertIntoTableCommand(callback func(string, ...string) error) Commander {
-	return NewBaseCommand("tinsert", 3, -1,
+	return NewBaseCommand("tinsert", 4, -1,
 		"insert into table row",
-		"(Usage: tinsert <database_name>.tablename 42:myName:0.3123 45:anotherName:3.14",
+		"(Usage: tinsert <database_name>.tablename name1:name2:name3 42:myName:0.3123 45:anotherName:3.14",
 		callback)
 }
 
 //NewSelectFromTableCommand constructor standart server commands
 func NewSelectFromTableCommand(callback func(string, ...string) error) Commander {
-	return NewBaseCommand("tselect", 3, -1,
+	return NewBaseCommand("tselect", 2, -1,
 		"select fields from table",
 		"(Usage: tselect <database_name>.tablename name1 name2 name3",
 		callback)

@@ -170,7 +170,9 @@ func SelectFromTable(dbName, tableName string, columNames []string) *datatypes.T
 	if err != nil {
 		return nil
 	}
-
+	if len(columNames) == 0 {
+		columNames = table.ColumnNames
+	}
 	return table.Select(columNames)
 }
 
@@ -181,7 +183,7 @@ func GetTable(dbName, tableName string) (*datatypes.Table, error) {
 	}
 	table, ok := db.Tables[tableName]
 	if !ok {
-		return nil, errors.New("cant create new table, table already exists")
+		return nil, errors.New("table with this name does not exist")
 	}
 
 	return table, nil
