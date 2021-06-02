@@ -16,3 +16,4 @@
 *__debug_bin
 cmd/aoimd/dbbackup.aoimdb
 dist/
+coverage.txt
