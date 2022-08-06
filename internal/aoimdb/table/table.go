@@ -1,29 +1,70 @@
-package datatypes
+package table
 
 import (
+	"bytes"
+	"encoding/gob"
 	"errors"
+	"fmt"
 	"reflect"
+	"sync"
+
+	"github.com/minmax1996/aoimdb/internal/aoimdb/datatypes"
 )
 
 type Row []interface{}
 
 type Table struct {
+	sync.RWMutex
 	Name        string
 	ColumnNames []string
-	ColumnTypes []reflect.Kind
+	ColumnTypes []datatypes.Datatype
 	DataRows    []Row
 }
 
-func (r Row) GetMap(cols []string) map[string]interface{} {
-	res := make(map[string]interface{})
-	for i, v := range cols {
-		res[v] = r[i]
+type exportTable struct {
+	Name        string
+	ColumnNames []string
+	ColumnTypes []string
+	DataRows    []Row
+}
+
+func (t *Table) MarshalBinary() ([]byte, error) {
+	export := exportTable{
+		Name:        t.Name,
+		ColumnNames: t.ColumnNames,
+		ColumnTypes: make([]string, 0, len(t.ColumnTypes)),
+		DataRows:    t.DataRows,
 	}
-	return res
+	for _, v := range t.ColumnTypes {
+		export.ColumnTypes = append(export.ColumnTypes, v.ToString())
+	}
+
+	buf := bytes.Buffer{}
+	if err := gob.NewEncoder(&buf).Encode(export); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+// UnmarshalBinary modifies the receiver so it must take a pointer receiver.
+func (t *Table) UnmarshalBinary(data []byte) error {
+	var export exportTable
+	if err := gob.NewDecoder(bytes.NewReader(data)).Decode(&export); err != nil {
+		return err
+	}
+	t.Name = export.Name
+	t.ColumnNames = export.ColumnNames
+	t.ColumnTypes = make([]datatypes.Datatype, 0, len(t.ColumnTypes))
+	t.DataRows = export.DataRows
+	for _, v := range export.ColumnTypes {
+		//TODO handle this later
+		t.ColumnTypes = append(t.ColumnTypes, *datatypes.FromString(v))
+	}
+	return nil
 }
 
 //NewTableSchema initialize new table scheam with no data
-func NewTableSchema(tableName string, names []string, types []reflect.Kind) *Table {
+func NewTableSchema(tableName string, names []string, types []datatypes.Datatype) *Table {
 	if len(names) != len(types) {
 		return nil
 	}
@@ -36,7 +77,7 @@ func NewTableSchema(tableName string, names []string, types []reflect.Kind) *Tab
 }
 
 //NewTableWithRows initailexe new table with rows
-func NewTableWithRows(tableName string, names []string, types []reflect.Kind, rows []Row) *Table {
+func NewTableWithRows(tableName string, names []string, types []datatypes.Datatype, rows []Row) *Table {
 	if len(names) != len(types) {
 		return nil
 	}
@@ -50,17 +91,28 @@ func NewTableWithRows(tableName string, names []string, types []reflect.Kind, ro
 
 //Insert inserts into rows new row with values if values pass typecheck
 func (t *Table) Insert(names []string, values []interface{}) error {
+	var err error
 	if len(names) != len(values) {
 		return errors.New("lens not equal")
 	}
+	t.Lock()
+	defer t.Unlock()
 
 	row := make(Row, len(t.ColumnNames))
 	for i, val := range values {
 		ind := findIndex(t.ColumnNames, names[i])
-		if ind == -1 || reflect.TypeOf(val).Kind() != t.ColumnTypes[ind] {
-			return errors.New("cant append value")
+		if ind == -1 {
+			return errors.New("cant find index")
 		}
-		row[ind] = val
+
+		if reflect.TypeOf(val) != t.ColumnTypes[ind].Type {
+			row[ind], err = datatypes.ConvertToColumnType(val, t.ColumnTypes[ind].Kind())
+			if err != nil {
+				return errors.Unwrap(fmt.Errorf("failed to convert to table type %w", err))
+			}
+		} else {
+			row[ind] = val
+		}
 	}
 	t.DataRows = append(t.DataRows, row)
 	//TODO insert indexes here
@@ -68,21 +120,24 @@ func (t *Table) Insert(names []string, values []interface{}) error {
 }
 
 //Filter filters dataRows by given function
-func (t *Table) Filter(filterfunc func(map[string]interface{}) bool) (resultTable *Table) {
+func (t *Table) Filter(filterfunc func(Row) bool) (resultTable *Table) {
 	//we using named return value to properly return resultTable after recover from panic
+	t.RLock()
+	defer t.RUnlock()
 	defer func() {
-		recover()
+		_ = recover()
 	}()
 
 	resultTable = &Table{
 		ColumnNames: t.ColumnNames,
 		ColumnTypes: t.ColumnTypes,
-		DataRows:    make([]Row, 0),
+		DataRows:    make([]Row, 0, len(t.DataRows)),
 	}
 	//TODO index
 	//filterfunc will panic if in user input has wrong type convertions
 	for _, v := range t.DataRows {
-		if filterfunc(v.GetMap(t.ColumnNames)) {
+		//filerMap := v.GetMap(t.ColumnNames)
+		if filterfunc(v) {
 			resultTable.DataRows = append(resultTable.DataRows, v)
 		}
 	}
@@ -91,18 +146,19 @@ func (t *Table) Filter(filterfunc func(map[string]interface{}) bool) (resultTabl
 }
 
 //Delete not sure leave it this way or change later
-func (t *Table) Delete(filterfunc func(map[string]interface{}) bool) (err error) {
+func (t *Table) Delete(filterfunc func(Row) bool) (err error) {
 	//we using named return value to properly return resultTable after recover from panic
 	defer func() {
-		recover()
+		_ = recover()
 		err = errors.New("panic recovered")
 	}()
-
+	t.Lock()
+	defer t.Unlock()
 	newDataRows := make([]Row, 0)
 	//filterfunc will panic if in user input has wrong type convertion
 	for _, v := range t.DataRows {
 		//TODO index
-		if !filterfunc(v.GetMap(t.ColumnNames)) {
+		if !filterfunc(v) {
 			newDataRows = append(newDataRows, v)
 		}
 	}
@@ -117,11 +173,12 @@ func (t *Table) Select(names []string) *Table {
 	if len(indexes) == 0 {
 		return nil
 	}
-
+	t.RLock()
+	defer t.RUnlock()
 	//make empty table with fixed lens
 	resultTable := &Table{
 		ColumnNames: make([]string, len(indexes)),
-		ColumnTypes: make([]reflect.Kind, len(indexes)),
+		ColumnTypes: make([]datatypes.Datatype, len(indexes)),
 		DataRows:    make([]Row, len(t.DataRows)),
 	}
 

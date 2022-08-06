@@ -11,15 +11,15 @@ import (
 	pb "github.com/minmax1996/aoimdb/api/proto/command"
 	"github.com/minmax1996/aoimdb/cmd/aoimd/grpcconnect"
 	"github.com/minmax1996/aoimdb/cmd/aoimd/tcpconnect"
-	"github.com/minmax1996/aoimdb/internal/aoimdb"
-	"github.com/minmax1996/aoimdb/logger"
+	"github.com/minmax1996/aoimdb/internal/aoimdb/database"
+	"github.com/minmax1996/aoimdb/pkg/logger"
 	"google.golang.org/grpc"
 )
 
 func init() {
 	parseFlags()
-	aoimdb.InitDatabaseController()
-	aoimdb.AddUser("admin", "pass")
+	database.InitDatabaseController()
+	_ = database.AddUser("admin", "pass")
 }
 
 const (
@@ -58,7 +58,6 @@ func startListenForTCPConnects(errChan chan error) error {
 			server.Connect(conn)
 		}
 	}(errChan)
-
 	return nil
 }
 
@@ -138,10 +137,7 @@ func main() {
 	//TODO MAnual Backup on stop app
 
 	//main loop for errors
-	for {
-		select {
-		case err := <-errChan:
-			logger.Error(err)
-		}
+	for err := range errChan {
+		logger.Error(err)
 	}
 }

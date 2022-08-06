@@ -83,6 +83,30 @@ func NewSetCommand(callback func(string, ...string) error) Commander {
 		callback)
 }
 
+//NewCreateTableCommand constructor standart server commands
+func NewCreateTableCommand(callback func(string, ...string) error) Commander {
+	return NewBaseCommand("tcreate", 3, -1,
+		"create table schema in database",
+		"(Usage: tcreate <database_name>.tablename name1:int32 name2:string name3:float64)",
+		callback)
+}
+
+//NewInsertIntoTableCommand constructor standart server commands
+func NewInsertIntoTableCommand(callback func(string, ...string) error) Commander {
+	return NewBaseCommand("tinsert", 4, -1,
+		"insert into table row",
+		"(Usage: tinsert <database_name>.tablename name1:name2:name3 42:myName:0.3123 45:anotherName:3.14",
+		callback)
+}
+
+//NewSelectFromTableCommand constructor standart server commands
+func NewSelectFromTableCommand(callback func(string, ...string) error) Commander {
+	return NewBaseCommand("tselect", 2, -1,
+		"select fields from table",
+		"(Usage: tselect <database_name>.tablename name1 name2 name3",
+		callback)
+}
+
 //NewSetCommand constructor standart server commands
 func NewKeysCommand(callback func(string, ...string) error) Commander {
 	return NewBaseCommand("keys", 1, 2,

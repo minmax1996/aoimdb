@@ -7,7 +7,7 @@ import (
 
 	"github.com/minmax1996/aoimdb/api/commands"
 	"github.com/minmax1996/aoimdb/api/msg_protocol"
-	"github.com/minmax1996/aoimdb/logger"
+	"github.com/minmax1996/aoimdb/pkg/logger"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
@@ -58,8 +58,8 @@ func (client *Client) Write(msg *msg_protocol.MsgPackRootMessage) {
 		logger.Warn(err.Error())
 		return
 	}
-	client.writer.WriteString(string(b) + "\n")
-	client.writer.Flush()
+	_, _ = client.writer.WriteString(string(b) + "\n")
+	_ = client.writer.Flush()
 }
 
 // Read reads message from the client.

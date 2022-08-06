@@ -12,7 +12,7 @@ import (
 	"github.com/minmax1996/aoimdb/api/commands"
 	"github.com/minmax1996/aoimdb/api/msg_protocol"
 	"github.com/vmihailenco/msgpack/v5"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 var (
@@ -29,6 +29,9 @@ func init() {
 	commands.RegisterCommand(commands.NewSelectCommand(Send))
 	commands.RegisterCommand(commands.NewGetCommand(Send))
 	commands.RegisterCommand(commands.NewSetCommand(Send))
+	commands.RegisterCommand(commands.NewCreateTableCommand(Send))
+	commands.RegisterCommand(commands.NewInsertIntoTableCommand(Send))
+	commands.RegisterCommand(commands.NewSelectFromTableCommand(Send))
 	commands.RegisterCommand(commands.NewKeysCommand(Send))
 	commands.RegisterCommand(commands.NewExitCommand(Send))
 
@@ -40,7 +43,10 @@ func init() {
 
 //Send sends command string to establised connection
 func Send(name string, s ...string) error {
-	writer.WriteString(name + " " + strings.Join(s, " ") + "\n")
+	_, err := writer.WriteString(name + " " + strings.Join(s, " ") + "\n")
+	if err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
@@ -68,7 +74,7 @@ func main() {
 	}
 
 	//shows help command
-	commands.GetCommand("help").CallWithArgs()
+	_ = commands.GetCommand("help").CallWithArgs()
 
 	startListenCommands()
 	os.Exit(0)
@@ -80,7 +86,7 @@ func handleAuthenticate() error {
 		return commands.GetCommand("auth").CallWithArgs(username, password)
 	} else if len(username) > 0 && len(password) == 0 {
 		fmt.Print("Enter password: ")
-		pass, err := terminal.ReadPassword(int(syscall.Stdin))
+		pass, err := term.ReadPassword(int(syscall.Stdin))
 		if err != nil {
 			return err
 		}
@@ -143,6 +149,12 @@ func startListenResponses() {
 				fmt.Println(*item.SetResponse)
 			case item.KeysResponse != nil:
 				fmt.Println(*item.KeysResponse)
+			case item.CreateTableResponse != nil:
+				fmt.Println(item.CreateTableResponse.Message)
+			case item.InsertTableResponse != nil:
+				fmt.Println(item.InsertTableResponse.Message)
+			case item.SelectTableResponse != nil:
+				fmt.Println(*item.SelectTableResponse)
 			default:
 				fmt.Println(item.Message)
 			}

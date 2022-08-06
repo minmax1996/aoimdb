@@ -26,13 +26,14 @@ func TestParseCommand(t *testing.T) {
 		wantErr bool
 	}{
 		{"auth", args{"auth admin pass", " "}, GetCommand("auth"), []string{"admin", "pass"}, false},
+		{"auth", args{"auth token", " "}, GetCommand("auth"), []string{"token"}, false},
 		{"select", args{"select 3", " "}, GetCommand("select"), []string{"3"}, false},
 		{"get", args{"get key", " "}, GetCommand("get"), []string{"key"}, false},
 		{"get2", args{"get 2.key", " "}, GetCommand("get"), []string{"2.key"}, false},
 		{"set", args{"set 2.key 231", " "}, GetCommand("set"), []string{"2.key", "231"}, false},
 		{"keys", args{"keys", " "}, GetCommand("keys"), []string{}, false},
 		{"keys", args{"keys 2.ddd", " "}, GetCommand("keys"), []string{"2.ddd"}, false},
-		{"authErr", args{"auth admin", " "}, nil, nil, true},
+		{"authErr", args{"auth", " "}, nil, nil, true},
 		{"getErr", args{"get", " "}, nil, nil, true},
 		{"selectErr", args{"select", " "}, nil, nil, true},
 	}

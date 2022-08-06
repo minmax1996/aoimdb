@@ -40,7 +40,10 @@ func (c *TcpClient) Close() error {
 
 //Send sends command string to establised connection
 func (c *TcpClient) Send(name string, s ...string) error {
-	c.writer.WriteString(name + " " + strings.Join(s, " ") + "\n")
+	_, err := c.writer.WriteString(name + " " + strings.Join(s, " ") + "\n")
+	if err != nil {
+		return err
+	}
 	return c.writer.Flush()
 }
 

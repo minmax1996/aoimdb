@@ -1,14 +1,19 @@
 package msg_protocol
 
+import "github.com/minmax1996/aoimdb/internal/aoimdb/table"
+
 type MsgPackRootMessage struct {
 	Message string
 	Error   error
 
-	AuthResponse   *AuthResponse
-	SelectResponse *SelectResponse
-	GetResponse    *GetResponse
-	SetResponse    *SetResponse
-	KeysResponse   *KeysResponse
+	AuthResponse        *AuthResponse
+	SelectResponse      *SelectResponse
+	GetResponse         *GetResponse
+	SetResponse         *SetResponse
+	KeysResponse        *KeysResponse
+	CreateTableResponse *CreateTableResponse
+	InsertTableResponse *InsertTableResponse
+	SelectTableResponse *SelectTableResponse
 }
 
 type AuthResponse struct {
@@ -30,4 +35,17 @@ type SetResponse struct {
 
 type KeysResponse struct {
 	Keys []string
+}
+
+type CreateTableResponse struct {
+	Message string
+}
+
+type InsertTableResponse struct {
+	Message string
+}
+
+type SelectTableResponse struct {
+	FieldNames []string
+	Rows       []table.Row
 }

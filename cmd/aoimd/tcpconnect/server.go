@@ -4,7 +4,7 @@ import (
 	"net"
 
 	"github.com/minmax1996/aoimdb/api/commands"
-	"github.com/minmax1996/aoimdb/logger"
+	"github.com/minmax1996/aoimdb/pkg/logger"
 )
 
 //TCPServer struct
@@ -30,6 +30,9 @@ func CreateTCPServer(errChan chan error) *TCPServer {
 	commands.RegisterCommand(commands.NewSetCommand(nil))
 	commands.RegisterCommand(commands.NewKeysCommand(nil))
 	commands.RegisterCommand(commands.NewExitCommand(nil))
+	commands.RegisterCommand(commands.NewCreateTableCommand(nil))
+	commands.RegisterCommand(commands.NewInsertIntoTableCommand(nil))
+	commands.RegisterCommand(commands.NewSelectFromTableCommand(nil))
 
 	ser.Listen()
 

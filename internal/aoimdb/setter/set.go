@@ -1,18 +1,20 @@
-package datatypes
+package setter
 
 import "errors"
+
+// Setter hsetter interface
+type Setter interface {
+	Set(string, interface{}) error
+	Get(string) (interface{}, error)
+	Keys() []string
+}
 
 //Set hset
 type Set struct {
 	Cache map[string]interface{}
 }
 
-// Setter hsetter interface
-type Setter interface {
-	// set whole structure in interface{}
-	Set(string, interface{}) error
-	Get(string) (interface{}, error)
-}
+var _ Setter = NewSet()
 
 // NewSet sets constructor
 func NewSet() *Set {
@@ -34,4 +36,12 @@ func (hs *Set) Get(key string) (interface{}, error) {
 		return nil, errors.New("element with this name not found")
 	}
 	return val, nil
+}
+
+func (hs *Set) Keys() []string {
+	result := make([]string, 0, len(hs.Cache))
+	for k := range hs.Cache {
+		result = append(result, k)
+	}
+	return result
 }
