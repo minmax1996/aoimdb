@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"reflect"
 	"strconv"
 
-	"github.com/minmax1996/aoimdb/internal/aoimdb"
+	aoimdb "github.com/minmax1996/aoimdb/internal/aoimdb/database"
 	"github.com/minmax1996/aoimdb/internal/aoimdb/datatypes"
+	"github.com/minmax1996/aoimdb/internal/aoimdb/table"
 )
 
 func main() {
@@ -14,29 +14,29 @@ func main() {
 	aoimdb.SelectDatabase("default")
 	aoimdb.CreateTable("default", "newTable",
 		[]string{"id", "name"},
-		[]reflect.Type{datatypes.Int, datatypes.String})
+		[]datatypes.Datatype{datatypes.Int, datatypes.String})
 
-	table, _ := aoimdb.GetTable("default", "newTable")
+	ttable, _ := aoimdb.GetTable("default", "newTable")
 
 	for i := 0; i < 1000; i++ {
-		table.Insert([]string{"id", "name"}, []interface{}{i, "Name" + strconv.Itoa(i)})
+		ttable.Insert([]string{"id", "name"}, []interface{}{i, "Name" + strconv.Itoa(i)})
 	}
 
 	fmt.Println("Inserted")
-	filtered1 := table.Filter(func(m datatypes.Row) bool {
+	filtered1 := ttable.Filter(func(m table.Row) bool {
 		return m[0].(int)%21 == 0
 	})
 	fmt.Println("filtered1------------------------------")
 	fmt.Println(filtered1)
 
-	filtered2 := filtered1.Filter(func(m datatypes.Row) bool {
+	filtered2 := filtered1.Filter(func(m table.Row) bool {
 		return m[0].(int)%5 == 0
 	})
 	fmt.Println("filtered2------------------------------")
 	fmt.Println(filtered2)
-	filtered2.Delete(func(m datatypes.Row) bool {
+	filtered2.Delete(func(m table.Row) bool {
 		return m[0].(int)%2 == 0
 	})
 	fmt.Println("afterDelete------------------------------")
-	fmt.Println(table)
+	fmt.Println(ttable)
 }

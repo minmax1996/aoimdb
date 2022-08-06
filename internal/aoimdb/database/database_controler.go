@@ -1,14 +1,15 @@
-package aoimdb
+package database
 
 import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
-	"reflect"
 
 	"github.com/minmax1996/aoimdb/internal/aoimdb/datatypes"
-	"github.com/minmax1996/aoimdb/internal/aoimdb/filestorage"
-	"github.com/minmax1996/aoimdb/logger"
+	"github.com/minmax1996/aoimdb/internal/aoimdb/setter"
+	"github.com/minmax1996/aoimdb/internal/aoimdb/table"
+	"github.com/minmax1996/aoimdb/pkg/filestorage"
+	"github.com/minmax1996/aoimdb/pkg/logger"
 )
 
 //databaseInstance to easy access to database from any part of program
@@ -16,17 +17,17 @@ var databaseInstance *DatabaseController
 
 // DatabaseController Database structure
 type DatabaseController struct {
-	Databases    map[string]*datatypes.Database
-	users        *datatypes.Set
-	accessTokens *datatypes.Set
+	Databases    map[string]*Database
+	users        setter.Setter
+	accessTokens setter.Setter
 }
 
 // NewDatabaseController database constructir
 func NewDatabaseController() *DatabaseController {
 	dbc := &DatabaseController{
-		Databases:    make(map[string]*datatypes.Database),
-		users:        datatypes.NewSet(),
-		accessTokens: datatypes.NewSet(),
+		Databases:    make(map[string]*Database),
+		users:        setter.NewSet(),
+		accessTokens: setter.NewSet(),
 	}
 
 	return dbc
@@ -80,7 +81,7 @@ func AddUser(user, pass string) error {
 func SelectDatabase(name string) {
 	if _, ok := databaseInstance.Databases[name]; !ok {
 		logger.Info("create database")
-		databaseInstance.Databases[name] = datatypes.NewDatabase(name)
+		databaseInstance.Databases[name] = NewDatabase(name)
 	}
 }
 
@@ -139,7 +140,7 @@ func HGet(dbName, key string) (interface{}, error) {
 	return db.Get(key)
 }
 
-func CreateTable(dbName, tableName string, columNames []string, columTypes []reflect.Type) error {
+func CreateTable(dbName, tableName string, columNames []string, columTypes []datatypes.Datatype) error {
 	db, ok := databaseInstance.Databases[dbName]
 	if !ok {
 		return errors.New("database with this name does not exist")
@@ -152,7 +153,7 @@ func CreateTable(dbName, tableName string, columNames []string, columTypes []ref
 	if len(columNames) != len(columTypes) {
 		return errors.New("cant create new table, number params not equal")
 	}
-	db.Tables[tableName] = datatypes.NewTableSchema(tableName, columNames, columTypes)
+	db.Tables[tableName] = table.NewTableSchema(tableName, columNames, columTypes)
 	return nil
 }
 
@@ -165,7 +166,7 @@ func InsertIntoTable(dbName, tableName string, columNames []string, values []int
 	return table.Insert(columNames, values)
 }
 
-func SelectFromTable(dbName, tableName string, columNames []string) *datatypes.Table {
+func SelectFromTable(dbName, tableName string, columNames []string) *table.Table {
 	table, err := GetTable(dbName, tableName)
 	if err != nil {
 		return nil
@@ -176,7 +177,7 @@ func SelectFromTable(dbName, tableName string, columNames []string) *datatypes.T
 	return table.Select(columNames)
 }
 
-func GetTable(dbName, tableName string) (*datatypes.Table, error) {
+func GetTable(dbName, tableName string) (*table.Table, error) {
 	db, ok := databaseInstance.Databases[dbName]
 	if !ok {
 		return nil, errors.New("database with this name does not exist")

@@ -1,6 +1,6 @@
 package msg_protocol
 
-import "github.com/minmax1996/aoimdb/internal/aoimdb/datatypes"
+import "github.com/minmax1996/aoimdb/internal/aoimdb/table"
 
 type MsgPackRootMessage struct {
 	Message string
@@ -47,5 +47,5 @@ type InsertTableResponse struct {
 
 type SelectTableResponse struct {
 	FieldNames []string
-	Rows       []datatypes.Row
+	Rows       []table.Row
 }

@@ -69,23 +69,23 @@ func init() {
 
 // Error error logger
 func Error(v interface{}) {
-	_logErr.Output(2, fmt.Sprintf(errTemplate, v))
+	_ = _logErr.Output(2, fmt.Sprintf(errTemplate, v))
 }
 
 // ErrorFormat error logger
 func ErrorFormat(format string, a ...interface{}) {
-	_logErr.Output(2, fmt.Sprintf(errTemplate, fmt.Sprintf(format, a...)))
+	_ = _logErr.Output(2, fmt.Sprintf(errTemplate, fmt.Sprintf(format, a...)))
 }
 
 // Fatal logger, calls os.Exit(1)
 func Fatal(v interface{}) {
-	_logFtl.Output(2, fmt.Sprintf(ftlTemplate, v))
+	_ = _logFtl.Output(2, fmt.Sprintf(ftlTemplate, v))
 	os.Exit(1)
 }
 
 // FatalFormat logger, calls os.Exit(1)
 func FatalFormat(format string, a ...interface{}) {
-	_logFtl.Output(2, fmt.Sprintf(ftlTemplate, fmt.Sprintf(format, a...)))
+	_ = _logFtl.Output(2, fmt.Sprintf(ftlTemplate, fmt.Sprintf(format, a...)))
 	os.Exit(1)
 }
 
@@ -94,7 +94,7 @@ func Info(v interface{}) {
 	if logLvl > InfoLvl {
 		return
 	}
-	_logInf.Output(2, fmt.Sprintf(infoTemplate, v))
+	_ = _logInf.Output(2, fmt.Sprintf(infoTemplate, v))
 }
 
 //InfoFormat info logger
@@ -102,7 +102,7 @@ func InfoFormat(format string, a ...interface{}) {
 	if logLvl > InfoLvl {
 		return
 	}
-	_logInf.Output(2, fmt.Sprintf(infoTemplate, fmt.Sprintf(format, a...)))
+	_ = _logInf.Output(2, fmt.Sprintf(infoTemplate, fmt.Sprintf(format, a...)))
 }
 
 //Warn warn logger
@@ -110,7 +110,7 @@ func Warn(v interface{}) {
 	if logLvl > ErrorLvl {
 		return
 	}
-	_logWrn.Output(2, fmt.Sprintf(warnTemplate, v))
+	_ = _logWrn.Output(2, fmt.Sprintf(warnTemplate, v))
 }
 
 //WarnFormat warn logger
@@ -118,7 +118,7 @@ func WarnFormat(format string, a ...interface{}) {
 	if logLvl > ErrorLvl {
 		return
 	}
-	_logWrn.Output(2, fmt.Sprintf(warnTemplate, fmt.Sprintf(format, a...)))
+	_ = _logWrn.Output(2, fmt.Sprintf(warnTemplate, fmt.Sprintf(format, a...)))
 }
 
 //Debug logger
@@ -126,7 +126,7 @@ func Debug(v interface{}) {
 	if logLvl > DebugLvl {
 		return
 	}
-	_logDbg.Output(2, fmt.Sprintf(debugTemplate, v))
+	_ = _logDbg.Output(2, fmt.Sprintf(debugTemplate, v))
 }
 
 //DebugFormat logger
@@ -134,5 +134,5 @@ func DebugFormat(format string, a ...interface{}) {
 	if logLvl > DebugLvl {
 		return
 	}
-	_logDbg.Output(2, fmt.Sprintf(debugTemplate, fmt.Sprintf(format, a...)))
+	_ = _logDbg.Output(2, fmt.Sprintf(debugTemplate, fmt.Sprintf(format, a...)))
 }

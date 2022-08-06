@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	pb "github.com/minmax1996/aoimdb/api/proto/command"
-	db "github.com/minmax1996/aoimdb/internal/aoimdb"
+	db "github.com/minmax1996/aoimdb/internal/aoimdb/database"
 )
 
 type Server struct {
@@ -15,7 +15,6 @@ type Server struct {
 
 func HandleContextAuthentication(ctx context.Context) error {
 	accessToken, ok := ctx.Value("access_token").(string)
-	return nil
 	if !ok {
 		return errors.New("context has no userCredentials")
 	}

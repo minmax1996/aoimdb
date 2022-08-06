@@ -1,11 +1,14 @@
-package datatypes
+package table
 
 import (
 	"bytes"
 	"encoding/gob"
 	"errors"
+	"fmt"
 	"reflect"
 	"sync"
+
+	"github.com/minmax1996/aoimdb/internal/aoimdb/datatypes"
 )
 
 type Row []interface{}
@@ -14,7 +17,7 @@ type Table struct {
 	sync.RWMutex
 	Name        string
 	ColumnNames []string
-	ColumnTypes []reflect.Type
+	ColumnTypes []datatypes.Datatype
 	DataRows    []Row
 }
 
@@ -33,7 +36,7 @@ func (t *Table) MarshalBinary() ([]byte, error) {
 		DataRows:    t.DataRows,
 	}
 	for _, v := range t.ColumnTypes {
-		export.ColumnTypes = append(export.ColumnTypes, ToString(v))
+		export.ColumnTypes = append(export.ColumnTypes, v.ToString())
 	}
 
 	buf := bytes.Buffer{}
@@ -51,16 +54,17 @@ func (t *Table) UnmarshalBinary(data []byte) error {
 	}
 	t.Name = export.Name
 	t.ColumnNames = export.ColumnNames
-	t.ColumnTypes = make([]reflect.Type, 0, len(t.ColumnTypes))
+	t.ColumnTypes = make([]datatypes.Datatype, 0, len(t.ColumnTypes))
 	t.DataRows = export.DataRows
 	for _, v := range export.ColumnTypes {
-		t.ColumnTypes = append(t.ColumnTypes, FromString(v))
+		//TODO handle this later
+		t.ColumnTypes = append(t.ColumnTypes, *datatypes.FromString(v))
 	}
 	return nil
 }
 
 //NewTableSchema initialize new table scheam with no data
-func NewTableSchema(tableName string, names []string, types []reflect.Type) *Table {
+func NewTableSchema(tableName string, names []string, types []datatypes.Datatype) *Table {
 	if len(names) != len(types) {
 		return nil
 	}
@@ -73,7 +77,7 @@ func NewTableSchema(tableName string, names []string, types []reflect.Type) *Tab
 }
 
 //NewTableWithRows initailexe new table with rows
-func NewTableWithRows(tableName string, names []string, types []reflect.Type, rows []Row) *Table {
+func NewTableWithRows(tableName string, names []string, types []datatypes.Datatype, rows []Row) *Table {
 	if len(names) != len(types) {
 		return nil
 	}
@@ -101,10 +105,10 @@ func (t *Table) Insert(names []string, values []interface{}) error {
 			return errors.New("cant find index")
 		}
 
-		if reflect.TypeOf(val) != t.ColumnTypes[ind] {
-			row[ind], err = ConvertToColumnType(val, t.ColumnTypes[ind].Kind())
+		if reflect.TypeOf(val) != t.ColumnTypes[ind].Type {
+			row[ind], err = datatypes.ConvertToColumnType(val, t.ColumnTypes[ind].Kind())
 			if err != nil {
-				return err
+				return errors.Unwrap(fmt.Errorf("failed to convert to table type %w", err))
 			}
 		} else {
 			row[ind] = val
@@ -121,7 +125,7 @@ func (t *Table) Filter(filterfunc func(Row) bool) (resultTable *Table) {
 	t.RLock()
 	defer t.RUnlock()
 	defer func() {
-		recover()
+		_ = recover()
 	}()
 
 	resultTable = &Table{
@@ -145,7 +149,7 @@ func (t *Table) Filter(filterfunc func(Row) bool) (resultTable *Table) {
 func (t *Table) Delete(filterfunc func(Row) bool) (err error) {
 	//we using named return value to properly return resultTable after recover from panic
 	defer func() {
-		recover()
+		_ = recover()
 		err = errors.New("panic recovered")
 	}()
 	t.Lock()
@@ -174,7 +178,7 @@ func (t *Table) Select(names []string) *Table {
 	//make empty table with fixed lens
 	resultTable := &Table{
 		ColumnNames: make([]string, len(indexes)),
-		ColumnTypes: make([]reflect.Type, len(indexes)),
+		ColumnTypes: make([]datatypes.Datatype, len(indexes)),
 		DataRows:    make([]Row, len(t.DataRows)),
 	}
 

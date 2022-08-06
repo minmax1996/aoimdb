@@ -1,36 +1,40 @@
-package datatypes
+package database
 
 import (
 	"fmt"
 	"regexp"
+
+	"github.com/minmax1996/aoimdb/internal/aoimdb/hsetter"
+	"github.com/minmax1996/aoimdb/internal/aoimdb/setter"
+	"github.com/minmax1996/aoimdb/internal/aoimdb/table"
 )
 
 //Database Database structure
 type Database struct {
 	Name   string
-	Sets   *Set
-	HSets  *HSet
-	Tables map[string]*Table
+	Sets   setter.Setter
+	HSets  hsetter.HSetter
+	Tables map[string]*table.Table
 }
 
 // NewDatabase database constructir
 func NewDatabase(name string) *Database {
 	return &Database{
 		Name:   name,
-		Sets:   NewSet(),
-		HSets:  NewHSet(),
-		Tables: make(map[string]*Table),
+		Sets:   setter.NewSet(),
+		HSets:  hsetter.NewHSet(),
+		Tables: make(map[string]*table.Table),
 	}
 }
 
 func (db *Database) Keys(keysPattern string) []string {
 	result := []string{}
-	for k := range db.Sets.Cache {
+	for _, k := range db.Sets.Keys() {
 		if matched, _ := regexp.MatchString(keysPattern, k); matched {
 			result = append(result, fmt.Sprintf("SET %s.%s", db.Name, k))
 		}
 	}
-	for k := range db.HSets.Cache {
+	for _, k := range db.HSets.Keys() {
 		if matched, _ := regexp.MatchString(keysPattern, k); matched {
 			result = append(result, fmt.Sprintf("HSET %s.%s", db.Name, k))
 		}

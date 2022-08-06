@@ -2,13 +2,13 @@ package tcpconnect
 
 import (
 	"errors"
-	"reflect"
 	"strings"
 
 	"github.com/minmax1996/aoimdb/api/commands"
 	"github.com/minmax1996/aoimdb/api/msg_protocol"
-	db "github.com/minmax1996/aoimdb/internal/aoimdb"
-	"github.com/minmax1996/aoimdb/logger"
+	db "github.com/minmax1996/aoimdb/internal/aoimdb/database"
+	"github.com/minmax1996/aoimdb/internal/aoimdb/datatypes"
+	"github.com/minmax1996/aoimdb/pkg/logger"
 )
 
 //Handle sends messages to client and return return
@@ -148,7 +148,7 @@ func (c *Client) CreateTableHandler(s ...string) error {
 	db.SelectDatabase(selectedDatabase)
 
 	var columnNames []string
-	var columnTypes []reflect.Type
+	var columnTypes []datatypes.Datatype
 
 	for _, v := range s[1:] {
 		splitted := strings.Split(v, ":")
@@ -156,16 +156,7 @@ func (c *Client) CreateTableHandler(s ...string) error {
 			continue
 		}
 		columnNames = append(columnNames, splitted[0])
-		switch splitted[1] {
-		case "int32":
-			columnTypes = append(columnTypes, reflect.TypeOf(int32(1)))
-		case "string":
-			columnTypes = append(columnTypes, reflect.TypeOf(""))
-		case "float32":
-			columnTypes = append(columnTypes, reflect.TypeOf(1.0))
-		default:
-			columnTypes = append(columnTypes, reflect.TypeOf(""))
-		}
+		columnTypes = append(columnTypes, *datatypes.FromClientString(splitted[1]))
 	}
 
 	err := db.CreateTable(selectedDatabase, tableName, columnNames, columnTypes)

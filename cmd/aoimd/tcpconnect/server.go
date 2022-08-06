@@ -4,7 +4,7 @@ import (
 	"net"
 
 	"github.com/minmax1996/aoimdb/api/commands"
-	"github.com/minmax1996/aoimdb/logger"
+	"github.com/minmax1996/aoimdb/pkg/logger"
 )
 
 //TCPServer struct

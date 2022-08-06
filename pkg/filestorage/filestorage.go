@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/minmax1996/aoimdb/logger"
+	"github.com/minmax1996/aoimdb/pkg/logger"
 )
 
 var databaseBackupFileName = "dbbackup.aoimdb"
@@ -69,7 +69,7 @@ func WriteToFile(s []byte, file string) {
 		log.Fatal(err)
 	}
 	defer f.Close()
-	f.Write(s)
+	_, _ = f.Write(s)
 }
 
 //EncodeAndCompress ecode p interface tand then gzip it
@@ -81,8 +81,10 @@ func EncodeAndCompress(p interface{}) ([]byte, error) {
 	}
 	zipbuf := bytes.Buffer{}
 	zipped := gzip.NewWriter(&zipbuf)
-	zipped.Write(buf.Bytes())
-	zipped.Close()
+	defer zipped.Close()
+	if _, err := zipped.Write(buf.Bytes()); err != nil {
+		return nil, err
+	}
 	return zipbuf.Bytes(), nil
 }
 

@@ -1,9 +1,4 @@
-package datatypes
-
-//HSet hset
-type HSet struct {
-	Cache map[string]map[string]interface{}
-}
+package hsetter
 
 // HSetter hsetter interface
 type HSetter interface {
@@ -12,6 +7,12 @@ type HSetter interface {
 	Add(string, ...interface{}) error
 	// set whole structure in map[string]interface
 	Set(string, interface{}) error
+	Keys() []string
+}
+
+//HSet hset
+type HSet struct {
+	Cache map[string]map[string]interface{}
 }
 
 // NewHSet sets constructor
@@ -34,4 +35,12 @@ func (hs *HSet) Add(key string, fieldValues ...interface{}) error {
 // Set : set key somestruct
 func (hs *HSet) Set(key string, value interface{}) error {
 	return nil
+}
+
+func (hs *HSet) Keys() []string {
+	result := make([]string, 0, len(hs.Cache))
+	for k := range hs.Cache {
+		result = append(result, k)
+	}
+	return result
 }
