@@ -1,11 +1,9 @@
 import { configureStore, ThunkAction, Action } from "@reduxjs/toolkit";
-import counterReducer from "../features/counter/counterSlice";
 import databaseReducer from "../features/data-visualizator/databaseSlice";
 import webconsoleReduser from "../features/web-console/webconsoleSlice";
 
 export const store = configureStore({
   reducer: {
-    counter: counterReducer,
     database: databaseReducer,
     cli: webconsoleReduser,
   },
