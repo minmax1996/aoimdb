@@ -10,7 +10,7 @@ import (
 	"syscall"
 
 	"github.com/minmax1996/aoimdb/api/commands"
-	"github.com/minmax1996/aoimdb/api/msg_protocol"
+	"github.com/minmax1996/aoimdb/pkg/protocols"
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/term"
 )
@@ -41,7 +41,7 @@ func init() {
 	flag.Parse()
 }
 
-//Send sends command string to establised connection
+// Send sends command string to establised connection
 func Send(name string, s ...string) error {
 	_, err := writer.WriteString(name + " " + strings.Join(s, " ") + "\n")
 	if err != nil {
@@ -126,7 +126,7 @@ func startListenResponses() {
 				os.Exit(1)
 			}
 
-			var item msg_protocol.MsgPackRootMessage
+			var item protocols.Response
 			err = msgpack.Unmarshal([]byte(data), &item)
 			if err != nil {
 				fmt.Println("(error) ERR " + err.Error())
@@ -138,23 +138,23 @@ func startListenResponses() {
 				continue
 			}
 
-			switch {
-			case item.AuthResponse != nil:
-				fmt.Println(*item.AuthResponse)
-			case item.SelectResponse != nil:
-				fmt.Println(*item.SelectResponse)
-			case item.GetResponse != nil:
-				fmt.Println(*item.GetResponse)
-			case item.SetResponse != nil:
-				fmt.Println(*item.SetResponse)
-			case item.KeysResponse != nil:
-				fmt.Println(*item.KeysResponse)
-			case item.CreateTableResponse != nil:
-				fmt.Println(item.CreateTableResponse.Message)
-			case item.InsertTableResponse != nil:
-				fmt.Println(item.InsertTableResponse.Message)
-			case item.SelectTableResponse != nil:
-				fmt.Println(*item.SelectTableResponse)
+			switch item.MessageType {
+			case protocols.MessageTypeAuth:
+				fmt.Println(item.Message)
+			case protocols.MessageTypeSelect:
+				fmt.Println(item.Message)
+			case protocols.MessageTypeGet:
+				fmt.Println(item.Message)
+			case protocols.MessageTypeSet:
+				fmt.Println(item.Message)
+			case protocols.MessageTypeKeys:
+				fmt.Println(item.Message)
+			case protocols.MessageTypeCreateTable:
+				fmt.Println(item.Message)
+			case protocols.MessageTypeInsertTable:
+				fmt.Println(item.Message)
+			case protocols.MessageTypeSelectTable:
+				fmt.Println(item.Message)
 			default:
 				fmt.Println(item.Message)
 			}

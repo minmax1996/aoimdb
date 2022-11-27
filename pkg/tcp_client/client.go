@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/minmax1996/aoimdb/api/msg_protocol"
+	"github.com/minmax1996/aoimdb/pkg/protocols"
 	"github.com/vmihailenco/msgpack"
 )
 
@@ -65,14 +65,14 @@ func (c *Client) AuthWithUserPassPair(user, pass string) error {
 			return
 		}
 
-		var item msg_protocol.MsgPackRootMessage
+		var item protocols.Response
 		err = msgpack.Unmarshal([]byte(data), &item)
 		if err != nil {
 			ch <- err
 			return
 		}
 
-		if item.AuthResponse == nil || item.AuthResponse.Message != "authenticated" {
+		if item.AuthResponse.Message != "authenticated" {
 			ch <- errors.New("not authenticated")
 			return
 		}
@@ -89,7 +89,7 @@ func (c *Client) AuthWithUserPassPair(user, pass string) error {
 	}
 }
 
-func (c *Client) Get(key string) (*msg_protocol.GetResponse, error) {
+func (c *Client) Get(key string) (*protocols.GetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -98,7 +98,7 @@ func (c *Client) Get(key string) (*msg_protocol.GetResponse, error) {
 	}
 
 	// make error channel
-	var resp *msg_protocol.GetResponse
+	var resp *protocols.GetResponse
 	ch := make(chan error, 1)
 	go func() {
 		//blocked read response
@@ -108,7 +108,7 @@ func (c *Client) Get(key string) (*msg_protocol.GetResponse, error) {
 			return
 		}
 
-		var item msg_protocol.MsgPackRootMessage
+		var item protocols.Response
 		err = msgpack.Unmarshal([]byte(data), &item)
 		if err != nil {
 			ch <- err
@@ -132,7 +132,7 @@ func (c *Client) Get(key string) (*msg_protocol.GetResponse, error) {
 	}
 }
 
-func (c *Client) Set(key string, value string) (*msg_protocol.SetResponse, error) {
+func (c *Client) Set(key string, value string) (*protocols.SetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -141,7 +141,7 @@ func (c *Client) Set(key string, value string) (*msg_protocol.SetResponse, error
 	}
 
 	// make error channel
-	var resp *msg_protocol.SetResponse
+	var resp *protocols.SetResponse
 	ch := make(chan error, 1)
 	go func() {
 		//blocked read response
@@ -151,7 +151,7 @@ func (c *Client) Set(key string, value string) (*msg_protocol.SetResponse, error
 			return
 		}
 
-		var item msg_protocol.MsgPackRootMessage
+		var item protocols.Response
 		err = msgpack.Unmarshal([]byte(data), &item)
 		if err != nil {
 			ch <- err

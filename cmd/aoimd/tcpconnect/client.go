@@ -2,13 +2,13 @@ package tcpconnect
 
 import (
 	"bufio"
+	"encoding/json"
 	"net"
 	"strings"
 
 	"github.com/minmax1996/aoimdb/api/commands"
-	"github.com/minmax1996/aoimdb/api/msg_protocol"
 	"github.com/minmax1996/aoimdb/pkg/logger"
-	"github.com/vmihailenco/msgpack/v5"
+	"github.com/minmax1996/aoimdb/pkg/protocols"
 )
 
 // Client struct
@@ -23,7 +23,7 @@ type Client struct {
 	SessionData SessionData
 }
 
-//SessionData SessionData
+// SessionData SessionData
 type SessionData struct {
 	authenticated    bool
 	selectedDatabase string
@@ -48,12 +48,12 @@ func CreateClient(conn net.Conn, server *TCPServer) *Client {
 
 // WriteError wrapper around Write to write only error
 func (client *Client) WriteError(err error) {
-	client.Write(&msg_protocol.MsgPackRootMessage{Error: err})
+	client.Write(&protocols.Response{Error: err})
 }
 
 // Write writes message to the client.
-func (client *Client) Write(msg *msg_protocol.MsgPackRootMessage) {
-	b, err := msgpack.Marshal(msg)
+func (client *Client) Write(msg interface{}) {
+	b, err := json.Marshal(msg)
 	if err != nil {
 		logger.Warn(err.Error())
 		return

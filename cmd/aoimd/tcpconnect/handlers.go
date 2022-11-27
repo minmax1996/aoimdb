@@ -5,13 +5,13 @@ import (
 	"strings"
 
 	"github.com/minmax1996/aoimdb/api/commands"
-	"github.com/minmax1996/aoimdb/api/msg_protocol"
 	db "github.com/minmax1996/aoimdb/internal/aoimdb/database"
 	"github.com/minmax1996/aoimdb/internal/aoimdb/datatypes"
 	"github.com/minmax1996/aoimdb/pkg/logger"
+	"github.com/minmax1996/aoimdb/pkg/protocols"
 )
 
-//Handle sends messages to client and return return
+// Handle sends messages to client and return return
 func (c *Client) Handle(command commands.Commander, args []string) error {
 	switch cmd := command.Name(); {
 	case cmd == "auth":
@@ -39,7 +39,7 @@ func (c *Client) Handle(command commands.Commander, args []string) error {
 	}
 }
 
-//Send sends command string to establised connection
+// Send sends command string to establised connection
 func (c *Client) AuthHandler(s ...string) error {
 	if len(s) == 2 {
 		if err := db.AuthentificateByUserPass(s[0], s[1]); err != nil {
@@ -51,8 +51,9 @@ func (c *Client) AuthHandler(s ...string) error {
 		}
 	}
 
-	c.Write(&msg_protocol.MsgPackRootMessage{
-		AuthResponse: &msg_protocol.AuthResponse{
+	c.Write(&protocols.Response{
+		MessageType: protocols.MessageTypeAuth,
+		AuthResponse: &protocols.AuthResponse{
 			Message: "authenticated",
 		},
 	})
@@ -60,20 +61,20 @@ func (c *Client) AuthHandler(s ...string) error {
 	return nil
 }
 
-//Send sends command string to establised connection
+// Send sends command string to establised connection
 func (c *Client) SelectHandler(s ...string) error {
 	c.SessionData.selectedDatabase = s[0]
 	db.SelectDatabase(s[0])
 
-	c.Write(&msg_protocol.MsgPackRootMessage{
-		SelectResponse: &msg_protocol.SelectResponse{
+	c.Write(&protocols.Response{
+		SelectResponse: &protocols.SelectResponse{
 			SelectedDatabase: s[0],
 		},
 	})
 	return nil
 }
 
-//Send sends command string to establised connection
+// Send sends command string to establised connection
 func (c *Client) GetHandler(s ...string) error {
 	selectedDatabase := c.SessionData.selectedDatabase
 	key := s[0]
@@ -93,8 +94,8 @@ func (c *Client) GetHandler(s ...string) error {
 		return err
 	}
 
-	c.Write(&msg_protocol.MsgPackRootMessage{
-		GetResponse: &msg_protocol.GetResponse{
+	c.Write(&protocols.Response{
+		GetResponse: &protocols.GetResponse{
 			Key:   key,
 			Value: val,
 		},
@@ -102,7 +103,7 @@ func (c *Client) GetHandler(s ...string) error {
 	return nil
 }
 
-//Send sends command string to establised connection
+// Send sends command string to establised connection
 func (c *Client) SetHandler(s ...string) error {
 	selectedDatabase := c.SessionData.selectedDatabase
 	key, value := s[0], s[1]
@@ -123,15 +124,15 @@ func (c *Client) SetHandler(s ...string) error {
 		return err
 	}
 
-	c.Write(&msg_protocol.MsgPackRootMessage{
-		SetResponse: &msg_protocol.SetResponse{
+	c.Write(&protocols.Response{
+		SetResponse: &protocols.SetResponse{
 			Message: "ok",
 		},
 	})
 	return nil
 }
 
-//Send sends command string to establised connection
+// Send sends command string to establised connection
 func (c *Client) CreateTableHandler(s ...string) error {
 	selectedDatabase := c.SessionData.selectedDatabase
 	tableName := s[0]
@@ -164,15 +165,15 @@ func (c *Client) CreateTableHandler(s ...string) error {
 		return err
 	}
 
-	c.Write(&msg_protocol.MsgPackRootMessage{
-		CreateTableResponse: &msg_protocol.CreateTableResponse{
+	c.Write(&protocols.Response{
+		CreateTableResponse: &protocols.CreateTableResponse{
 			Message: "ok",
 		},
 	})
 	return nil
 }
 
-//Send sends command string to establised connection
+// Send sends command string to establised connection
 func (c *Client) InsertIntoTableHandler(s ...string) error {
 	selectedDatabase := c.SessionData.selectedDatabase
 	tableName := s[0]
@@ -199,8 +200,8 @@ func (c *Client) InsertIntoTableHandler(s ...string) error {
 		//we can pass interface{} to rows by string
 		err := db.InsertIntoTable(selectedDatabase, tableName, columnNames, row)
 		if err != nil {
-			c.Write(&msg_protocol.MsgPackRootMessage{
-				InsertTableResponse: &msg_protocol.InsertTableResponse{
+			c.Write(&protocols.Response{
+				InsertTableResponse: &protocols.InsertTableResponse{
 					Message: err.Error(),
 				},
 			})
@@ -208,15 +209,15 @@ func (c *Client) InsertIntoTableHandler(s ...string) error {
 		}
 	}
 
-	c.Write(&msg_protocol.MsgPackRootMessage{
-		InsertTableResponse: &msg_protocol.InsertTableResponse{
+	c.Write(&protocols.Response{
+		InsertTableResponse: &protocols.InsertTableResponse{
 			Message: "ok",
 		},
 	})
 	return nil
 }
 
-//Send sends command string to establised connection
+// Send sends command string to establised connection
 func (c *Client) SelectFromTableHandler(s ...string) error {
 	selectedDatabase := c.SessionData.selectedDatabase
 	tableName := s[0]
@@ -237,16 +238,16 @@ func (c *Client) SelectFromTableHandler(s ...string) error {
 		return nil
 	}
 
-	c.Write(&msg_protocol.MsgPackRootMessage{
-		SelectTableResponse: &msg_protocol.SelectTableResponse{
+	c.Write(&protocols.Response{
+		SelectTableResponse: &protocols.SelectTableResponse{
 			FieldNames: table.ColumnNames,
-			Rows:       table.DataRows,
+			//Rows:       table.DataRows, TODO
 		},
 	})
 	return nil
 }
 
-//Send sends command string to establised connection
+// Send sends command string to establised connection
 func (c *Client) KeysHandler(s ...string) error {
 	//Get client last selected database and no keypatterf by default
 	selectedDatabase, keypattern := c.SessionData.selectedDatabase, ""
@@ -263,17 +264,17 @@ func (c *Client) KeysHandler(s ...string) error {
 		return err
 	}
 
-	c.Write(&msg_protocol.MsgPackRootMessage{
-		KeysResponse: &msg_protocol.KeysResponse{
+	c.Write(&protocols.Response{
+		KeysResponse: &protocols.KeysResponse{
 			Keys: result,
 		},
 	})
 	return nil
 }
 
-//Send sends command string to establised connection
+// Send sends command string to establised connection
 func (c *Client) ExitHandler(s ...string) error {
-	c.Write(&msg_protocol.MsgPackRootMessage{
+	c.Write(&protocols.Response{
 		Message: "Bye",
 	})
 	c.Disconnect()
