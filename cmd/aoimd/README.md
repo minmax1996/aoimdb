@@ -22,5 +22,4 @@ Every 30 sec server will write data to file; On start it will try to restore dat
 
 ## Future Features
 
-* GRPC Support to access data
 * Web Interface to access data

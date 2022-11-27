@@ -1,19 +1,14 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"net"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	pb "github.com/minmax1996/aoimdb/api/proto/command"
-	"github.com/minmax1996/aoimdb/cmd/aoimd/grpcconnect"
 	"github.com/minmax1996/aoimdb/cmd/aoimd/tcpconnect"
 	"github.com/minmax1996/aoimdb/internal/aoimdb/database"
 	"github.com/minmax1996/aoimdb/pkg/logger"
-	"google.golang.org/grpc"
 )
 
 func init() {
@@ -73,42 +68,6 @@ func startWebUI(errChan chan error) error {
 	return nil
 }
 
-func startListenForGRPCConnects(errChan chan error) error {
-	listener, err := net.Listen("tcp", grcpPort)
-	if err != nil {
-		return err
-	}
-	s := grpc.NewServer()
-	pb.RegisterDatabaseControllerServer(s, &grpcconnect.Server{})
-
-	go func() {
-		if err := s.Serve(listener); err != nil {
-			errChan <- err
-		}
-	}()
-	return nil
-}
-
-func serveHttpGateway(errChan chan error) error {
-	ctx := context.Background()
-	// Register gRPC server endpoint
-	// Note: Make sure the gRPC server is running properly and accessible
-	muxx := runtime.NewServeMux()
-	opts := []grpc.DialOption{grpc.WithInsecure()}
-
-	err := pb.RegisterDatabaseControllerHandlerFromEndpoint(ctx, muxx, grcpPort, opts)
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		if err := http.ListenAndServe(httpProxyPort, muxx); err != nil {
-			errChan <- err
-		}
-	}()
-	return nil
-}
-
 func main() {
 	// main error chan
 	errChan := make(chan error)
@@ -120,16 +79,6 @@ func main() {
 	}
 
 	if err := startWebUI(errChan); err != nil {
-		logger.Fatal(err)
-		return
-	}
-
-	if err := startListenForGRPCConnects(errChan); err != nil {
-		logger.Fatal(err)
-		return
-	}
-
-	if err := serveHttpGateway(errChan); err != nil {
 		logger.Fatal(err)
 		return
 	}
