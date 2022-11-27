@@ -19,6 +19,7 @@ type Table struct {
 	ColumnNames []string
 	ColumnTypes []datatypes.Datatype
 	DataRows    []Row
+	Indexes     []TableIndex
 }
 
 type exportTable struct {
@@ -26,6 +27,7 @@ type exportTable struct {
 	ColumnNames []string
 	ColumnTypes []string
 	DataRows    []Row
+	Indexes     []TableIndex
 }
 
 func (t *Table) MarshalBinary() ([]byte, error) {
@@ -63,8 +65,8 @@ func (t *Table) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-//NewTableSchema initialize new table scheam with no data
-func NewTableSchema(tableName string, names []string, types []datatypes.Datatype) *Table {
+// NewTableSchema initialize new table scheam with no data
+func NewTableSchema(tableName string, names []string, types []reflect.Kind, ti ...TableIndex) *Table {
 	if len(names) != len(types) {
 		return nil
 	}
@@ -73,11 +75,12 @@ func NewTableSchema(tableName string, names []string, types []datatypes.Datatype
 		ColumnNames: names,
 		ColumnTypes: types,
 		DataRows:    make([]Row, 0),
+		Indexes:     ti,
 	}
 }
 
-//NewTableWithRows initailexe new table with rows
-func NewTableWithRows(tableName string, names []string, types []datatypes.Datatype, rows []Row) *Table {
+// NewTableWithRows initailexe new table with rows
+func NewTableWithRows(tableName string, names []string, types []reflect.Kind, rows []Row, ti ...TableIndex) *Table {
 	if len(names) != len(types) {
 		return nil
 	}
@@ -89,7 +92,16 @@ func NewTableWithRows(tableName string, names []string, types []datatypes.Dataty
 	}
 }
 
-//Insert inserts into rows new row with values if values pass typecheck
+func (t *Table) AddIndex(ti TableIndex) {
+	t.RLock()
+	defer t.RLock()
+	for _, v := range t.DataRows {
+		ti.AddToIndex(&v)
+	}
+	t.Indexes = append(t.Indexes, ti)
+}
+
+// Insert inserts into rows new row with values if values pass typecheck
 func (t *Table) Insert(names []string, values []interface{}) error {
 	var err error
 	if len(names) != len(values) {
@@ -114,12 +126,15 @@ func (t *Table) Insert(names []string, values []interface{}) error {
 			row[ind] = val
 		}
 	}
+	// Populate indexes
+	for _, v := range t.Indexes {
+		v.AddToIndex(&row)
+	}
 	t.DataRows = append(t.DataRows, row)
-	//TODO insert indexes here
 	return nil
 }
 
-//Filter filters dataRows by given function
+// Filter filters dataRows by given function
 func (t *Table) Filter(filterfunc func(Row) bool) (resultTable *Table) {
 	//we using named return value to properly return resultTable after recover from panic
 	t.RLock()
@@ -133,7 +148,17 @@ func (t *Table) Filter(filterfunc func(Row) bool) (resultTable *Table) {
 		ColumnTypes: t.ColumnTypes,
 		DataRows:    make([]Row, 0, len(t.DataRows)),
 	}
-	//TODO index
+
+	// for _, idx := range t.Indexes {
+	// 	rows, err := idx.Find(func(key interface{}) bool {
+
+	// 	})
+	// 	if err == nil {
+	// 		resultTable.DataRows = append(resultTable.DataRows, rows...)
+	// 		return resultTable
+	// 	}
+	// }
+
 	//filterfunc will panic if in user input has wrong type convertions
 	for _, v := range t.DataRows {
 		//filerMap := v.GetMap(t.ColumnNames)
@@ -145,7 +170,44 @@ func (t *Table) Filter(filterfunc func(Row) bool) (resultTable *Table) {
 	return resultTable
 }
 
-//Delete not sure leave it this way or change later
+// Filter filters dataRows by given function
+func (t *Table) FilterByValue(colName string, value interface{}) (resultTable *Table) {
+	//we using named return value to properly return resultTable after recover from panic
+	t.RLock()
+	defer t.RUnlock()
+	defer func() {
+		recover()
+	}()
+
+	resultTable = &Table{
+		ColumnNames: t.ColumnNames,
+		ColumnTypes: t.ColumnTypes,
+		DataRows:    make([]Row, 0, len(t.DataRows)),
+	}
+
+	for _, idx := range t.Indexes {
+		if idx.ColName() == colName {
+			rows, err := idx.FindByValue(value)
+			if err == nil {
+				resultTable.DataRows = append(resultTable.DataRows, rows...)
+				return resultTable
+			}
+		}
+	}
+
+	//filterfunc will panic if in user input has wrong type convertions
+	inxd := findIndex(t.ColumnNames, colName)
+	for _, v := range t.DataRows {
+		//filerMap := v.GetMap(t.ColumnNames)
+		if v[inxd] == value {
+			resultTable.DataRows = append(resultTable.DataRows, v)
+		}
+	}
+
+	return resultTable
+}
+
+// Delete not sure leave it this way or change later
 func (t *Table) Delete(filterfunc func(Row) bool) (err error) {
 	//we using named return value to properly return resultTable after recover from panic
 	defer func() {
@@ -167,7 +229,7 @@ func (t *Table) Delete(filterfunc func(Row) bool) (err error) {
 	return nil
 }
 
-//Select returns filtered table with only given names in given order
+// Select returns filtered table with only given names in given order
 func (t *Table) Select(names []string) *Table {
 	indexes := findIndexes(t.ColumnNames, names)
 	if len(indexes) == 0 {
@@ -198,7 +260,7 @@ func (t *Table) Select(names []string) *Table {
 	return resultTable
 }
 
-//findIndexes finds all indexes that correspond all columns names in collection
+// findIndexes finds all indexes that correspond all columns names in collection
 func findIndexes(colletion []string, values []string) []int {
 	result := make([]int, 0)
 	for _, vv := range values {
@@ -211,7 +273,7 @@ func findIndexes(colletion []string, values []string) []int {
 	return result
 }
 
-//findIndexes finds all indexes that correspond all columns names in collection
+// findIndexes finds all indexes that correspond all columns names in collection
 func findIndex(colletion []string, value string) int {
 	for i, v := range colletion {
 		if v == value {
