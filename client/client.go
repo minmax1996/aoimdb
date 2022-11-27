@@ -33,7 +33,7 @@ func NewTcpClient(host string) (*TcpClient, error) {
 	return &c, nil
 }
 
-//Send sends command string to establised connection
+//Close closes connection
 func (c *TcpClient) Close() error {
 	return c.connection.Close()
 }
@@ -47,89 +47,82 @@ func (c *TcpClient) Send(name string, s ...string) error {
 	return c.writer.Flush()
 }
 
-func (c *TcpClient) AuthWithUserPassPair(user, pass string) error {
+func sendWithTimeout(fn func() (interface{}, error)) (interface{}, error) {
+	var response interface{}
+	var err error
+
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	if err := c.Send("auth", user, pass); err != nil {
-		return err
-	}
-
-	// make error channel
 	ch := make(chan error, 1)
 	go func() {
-		//blocked read response
-		data, err := c.reader.ReadString('\n')
-		if err != nil {
-			ch <- err
-			return
-		}
-
-		var item msg_protocol.MsgPackRootMessage
-		err = msgpack.Unmarshal([]byte(data), &item)
-		if err != nil {
-			ch <- err
-			return
-		}
-
-		if item.AuthResponse == nil || item.AuthResponse.Message != "authenticated" {
-			ch <- errors.New("not authenticated")
-			return
-		}
-
-		ch <- nil
+		response, err = fn()
+		ch <- err
 	}()
-
 	//listen error channel or context.done
 	select {
 	case err := <-ch:
-		return err
+		return response, err
 	case <-ctx.Done():
-		return ctx.Err()
+		return response, ctx.Err()
 	}
 }
 
+//AuthWithUserPassPair this command will authenticate your client connection to perform other commands
+func (c *TcpClient) AuthWithUserPassPair(user, pass string) error {
+	return sendWithTimeout(func() (interface{}, error) {
+		if err := c.Send("auth", user, pass); err != nil {
+			return nil, err
+		}
+
+		//blocked read response
+		data, err := c.reader.ReadString('\n')
+		if err != nil {
+			return nil, err
+		}
+
+		var item msg_protocol.MsgPackRootMessage
+		err = msgpack.Unmarshal([]byte(data), &item)
+		if err != nil {
+			return nil, err
+		}
+
+		if item.AuthResponse == nil || item.AuthResponse.Message != "authenticated" {
+			return nil, errors.New("not authenticated")
+		}
+
+		return item.AuthResponse, nil
+	})
+}
+
 func (c *TcpClient) Get(key string) (*msg_protocol.GetResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
+	return sendWithTimeout(func() error {
 
-	if err := c.Send("get", key); err != nil {
-		return nil, err
-	}
+		if err := c.Send("get", key); err != nil {
+			return err
+		}
 
-	// make error channel
-	var resp *msg_protocol.GetResponse
-	ch := make(chan error, 1)
-	go func() {
 		//blocked read response
 		data, err := c.reader.ReadString('\n')
 		if err != nil {
 			ch <- err
-			return
+			return err
 		}
 
 		var item msg_protocol.MsgPackRootMessage
 		err = msgpack.Unmarshal([]byte(data), &item)
 		if err != nil {
 			ch <- err
-			return
+			return err
 		}
 
 		if item.GetResponse == nil {
 			ch <- errors.New("not response")
-			return
+			return errors.New("not response")
 		}
 		resp = item.GetResponse
 		ch <- nil
-	}()
-
-	//listen error channel or context.done
-	select {
-	case err := <-ch:
-		return resp, err
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	}
+	})
 }
 
 func (c *TcpClient) Set(key string, value string) (*msg_protocol.SetResponse, error) {
