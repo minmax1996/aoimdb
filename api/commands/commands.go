@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-//Commander interface for command from userInput and for server parse
+// Commander interface for command from userInput and for server parse
 type Commander interface {
 	Name() string
 	ShowDescription() string
@@ -21,12 +21,12 @@ func init() {
 	RegisterCommand(NewHelpCommand())
 }
 
-//RegisterCommand appends commander object to collection registered commands for help and other
+// RegisterCommand appends commander object to collection registered commands for help and other
 func RegisterCommand(commander Commander) {
 	commanders = append(commanders, commander)
 }
 
-//GetCommand gets command by name or returns nil if not found
+// GetCommand gets command by name or returns nil if not found
 func GetCommand(name string) Commander {
 	for _, v := range commanders {
 		if v.Name() == name {
@@ -36,7 +36,7 @@ func GetCommand(name string) Commander {
 	return nil
 }
 
-//ParseCommand parse userInput to Commander and validate args, and return them
+// ParseCommand parse userInput to Commander and validate args, and return them
 func ParseCommand(input string, sep string) (Commander, []string, error) {
 	uArr := strings.Split(input, sep)
 	command := GetCommand(uArr[0])
@@ -51,7 +51,7 @@ func ParseCommand(input string, sep string) (Commander, []string, error) {
 	return command, uArr[1:], nil
 }
 
-//NewAuthCommand constructor standart server commands
+// NewAuthCommand constructor standart server commands
 func NewAuthCommand(callback func(string, ...string) error) Commander {
 	return NewBaseCommand("auth", 2, 3,
 		"auth database command",
@@ -59,7 +59,7 @@ func NewAuthCommand(callback func(string, ...string) error) Commander {
 		callback)
 }
 
-//NewSelectCommand constructor standart server commands
+// NewSelectCommand constructor standart server commands
 func NewSelectCommand(callback func(string, ...string) error) Commander {
 	return NewBaseCommand("select", 2, 2,
 		"select database command",
@@ -67,7 +67,7 @@ func NewSelectCommand(callback func(string, ...string) error) Commander {
 		callback)
 }
 
-//NewGetCommand constructor standart server commands
+// NewGetCommand constructor standart server commands
 func NewGetCommand(callback func(string, ...string) error) Commander {
 	return NewBaseCommand("get", 2, 2,
 		"get command",
@@ -75,7 +75,7 @@ func NewGetCommand(callback func(string, ...string) error) Commander {
 		callback)
 }
 
-//NewSetCommand constructor standart server commands
+// NewSetCommand constructor standart server commands
 func NewSetCommand(callback func(string, ...string) error) Commander {
 	return NewBaseCommand("set", 3, 3,
 		"set database command",
@@ -83,15 +83,15 @@ func NewSetCommand(callback func(string, ...string) error) Commander {
 		callback)
 }
 
-//NewCreateTableCommand constructor standart server commands
+// NewCreateTableCommand constructor standart server commands
 func NewCreateTableCommand(callback func(string, ...string) error) Commander {
 	return NewBaseCommand("tcreate", 3, -1,
 		"create table schema in database",
-		"(Usage: tcreate <database_name>.tablename name1:int32 name2:string name3:float64)",
+		"(Usage: tcreate <database_name>.tablename name1:int32 name2:str name3:float64)",
 		callback)
 }
 
-//NewInsertIntoTableCommand constructor standart server commands
+// NewInsertIntoTableCommand constructor standart server commands
 func NewInsertIntoTableCommand(callback func(string, ...string) error) Commander {
 	return NewBaseCommand("tinsert", 4, -1,
 		"insert into table row",
@@ -99,7 +99,7 @@ func NewInsertIntoTableCommand(callback func(string, ...string) error) Commander
 		callback)
 }
 
-//NewSelectFromTableCommand constructor standart server commands
+// NewSelectFromTableCommand constructor standart server commands
 func NewSelectFromTableCommand(callback func(string, ...string) error) Commander {
 	return NewBaseCommand("tselect", 2, -1,
 		"select fields from table",
@@ -107,7 +107,7 @@ func NewSelectFromTableCommand(callback func(string, ...string) error) Commander
 		callback)
 }
 
-//NewSetCommand constructor standart server commands
+// NewSetCommand constructor standart server commands
 func NewKeysCommand(callback func(string, ...string) error) Commander {
 	return NewBaseCommand("keys", 1, 2,
 		"keys database command",
@@ -115,21 +115,21 @@ func NewKeysCommand(callback func(string, ...string) error) Commander {
 		callback)
 }
 
-//NewExitCommand constructor standart server commands
+// NewExitCommand constructor standart server commands
 func NewExitCommand(callback func(string, ...string) error) Commander {
 	return NewBaseCommand("exit", 1, 1,
 		"exits from server", "",
 		callback)
 }
 
-//NewHelpCommand constructor standart server commands
+// NewHelpCommand constructor standart server commands
 func NewHelpCommand() Commander {
 	return NewBaseCommand("help", 1, 2,
 		"shows this message", "",
 		showAllCommands)
 }
 
-//showAllCommands used for HelpCommand to print all registered commands (or selected one if pass its name to args)
+// showAllCommands used for HelpCommand to print all registered commands (or selected one if pass its name to args)
 func showAllCommands(name string, args ...string) error {
 	if len(args) == 0 {
 		result := "Usage:\n<command> <args>\n\nCommands:\n"
