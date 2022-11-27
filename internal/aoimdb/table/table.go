@@ -19,6 +19,7 @@ type Table struct {
 	ColumnNames []string
 	ColumnTypes []datatypes.Datatype
 	DataRows    []Row
+	Indexes     []TableIndex
 }
 
 type exportTable struct {
@@ -64,7 +65,7 @@ func (t *Table) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-//NewTableSchema initialize new table scheam with no data
+// NewTableSchema initialize new table scheam with no data
 func NewTableSchema(tableName string, names []string, types []reflect.Kind, ti ...TableIndex) *Table {
 	if len(names) != len(types) {
 		return nil
@@ -78,7 +79,7 @@ func NewTableSchema(tableName string, names []string, types []reflect.Kind, ti .
 	}
 }
 
-//NewTableWithRows initailexe new table with rows
+// NewTableWithRows initailexe new table with rows
 func NewTableWithRows(tableName string, names []string, types []reflect.Kind, rows []Row, ti ...TableIndex) *Table {
 	if len(names) != len(types) {
 		return nil
@@ -100,7 +101,7 @@ func (t *Table) AddIndex(ti TableIndex) {
 	t.Indexes = append(t.Indexes, ti)
 }
 
-//Insert inserts into rows new row with values if values pass typecheck
+// Insert inserts into rows new row with values if values pass typecheck
 func (t *Table) Insert(names []string, values []interface{}) error {
 	var err error
 	if len(names) != len(values) {
@@ -133,7 +134,7 @@ func (t *Table) Insert(names []string, values []interface{}) error {
 	return nil
 }
 
-//Filter filters dataRows by given function
+// Filter filters dataRows by given function
 func (t *Table) Filter(filterfunc func(Row) bool) (resultTable *Table) {
 	//we using named return value to properly return resultTable after recover from panic
 	t.RLock()
@@ -169,7 +170,7 @@ func (t *Table) Filter(filterfunc func(Row) bool) (resultTable *Table) {
 	return resultTable
 }
 
-//Filter filters dataRows by given function
+// Filter filters dataRows by given function
 func (t *Table) FilterByValue(colName string, value interface{}) (resultTable *Table) {
 	//we using named return value to properly return resultTable after recover from panic
 	t.RLock()
@@ -206,7 +207,7 @@ func (t *Table) FilterByValue(colName string, value interface{}) (resultTable *T
 	return resultTable
 }
 
-//Delete not sure leave it this way or change later
+// Delete not sure leave it this way or change later
 func (t *Table) Delete(filterfunc func(Row) bool) (err error) {
 	//we using named return value to properly return resultTable after recover from panic
 	defer func() {
@@ -228,7 +229,7 @@ func (t *Table) Delete(filterfunc func(Row) bool) (err error) {
 	return nil
 }
 
-//Select returns filtered table with only given names in given order
+// Select returns filtered table with only given names in given order
 func (t *Table) Select(names []string) *Table {
 	indexes := findIndexes(t.ColumnNames, names)
 	if len(indexes) == 0 {
@@ -259,7 +260,7 @@ func (t *Table) Select(names []string) *Table {
 	return resultTable
 }
 
-//findIndexes finds all indexes that correspond all columns names in collection
+// findIndexes finds all indexes that correspond all columns names in collection
 func findIndexes(colletion []string, values []string) []int {
 	result := make([]int, 0)
 	for _, vv := range values {
@@ -272,7 +273,7 @@ func findIndexes(colletion []string, values []string) []int {
 	return result
 }
 
-//findIndexes finds all indexes that correspond all columns names in collection
+// findIndexes finds all indexes that correspond all columns names in collection
 func findIndex(colletion []string, value string) int {
 	for i, v := range colletion {
 		if v == value {

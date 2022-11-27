@@ -6,17 +6,15 @@ import (
 	"strconv"
 )
 
-type Datatype struct {
-	reflect.Type
-}
+type Datatype reflect.Type
 
 var (
-	Int     Datatype = Datatype{reflect.TypeOf(int(1))}
-	Int32   Datatype = Datatype{reflect.TypeOf(int32(1))}
-	Int64   Datatype = Datatype{reflect.TypeOf(int64(1))}
-	String  Datatype = Datatype{reflect.TypeOf(string(""))}
-	Float32 Datatype = Datatype{reflect.TypeOf(float32(1.0))}
-	Float64 Datatype = Datatype{reflect.TypeOf(float64(1.0))}
+	Int     Datatype = Datatype(reflect.TypeOf(int(1)))
+	Int32   Datatype = Datatype(reflect.TypeOf(int32(1)))
+	Int64   Datatype = Datatype(reflect.TypeOf(int64(1)))
+	String  Datatype = Datatype(reflect.TypeOf(string("")))
+	Float32 Datatype = Datatype(reflect.TypeOf(float32(1.0)))
+	Float64 Datatype = Datatype(reflect.TypeOf(float64(1.0)))
 )
 
 func (t Datatype) ToString() string {

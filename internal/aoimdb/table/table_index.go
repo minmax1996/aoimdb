@@ -1,4 +1,4 @@
-package datatypes
+package table
 
 type TableIndex interface {
 	ColName() string
