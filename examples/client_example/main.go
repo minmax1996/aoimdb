@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 
-	"github.com/minmax1996/aoimdb/client"
+	"github.com/minmax1996/aoimdb/pkg/tcp_client"
 )
 
 func main() {
-	client, err := client.NewTcpClient(":1593")
+	client, err := tcp_client.NewClient(":1593")
 	if err != nil {
 		fmt.Println(err.Error())
 		return

@@ -1,4 +1,4 @@
-package client
+package tcp_client
 
 import (
 	"bufio"
@@ -12,19 +12,19 @@ import (
 	"github.com/vmihailenco/msgpack"
 )
 
-type TcpClient struct {
+type Client struct {
 	connection net.Conn
 	reader     *bufio.Reader
 	writer     *bufio.Writer
 }
 
-func NewTcpClient(host string) (*TcpClient, error) {
+func NewClient(host string) (*Client, error) {
 	connection, err := net.Dial("tcp", host)
 	if err != nil {
 		return nil, err
 	}
 
-	c := TcpClient{
+	c := Client{
 		connection: connection,
 		reader:     bufio.NewReader(connection),
 		writer:     bufio.NewWriter(connection),
@@ -33,13 +33,13 @@ func NewTcpClient(host string) (*TcpClient, error) {
 	return &c, nil
 }
 
-//Send sends command string to establised connection
-func (c *TcpClient) Close() error {
+// Send sends command string to establised connection
+func (c *Client) Close() error {
 	return c.connection.Close()
 }
 
-//Send sends command string to establised connection
-func (c *TcpClient) Send(name string, s ...string) error {
+// Send sends command string to establised connection
+func (c *Client) Send(name string, s ...string) error {
 	_, err := c.writer.WriteString(name + " " + strings.Join(s, " ") + "\n")
 	if err != nil {
 		return err
@@ -47,7 +47,7 @@ func (c *TcpClient) Send(name string, s ...string) error {
 	return c.writer.Flush()
 }
 
-func (c *TcpClient) AuthWithUserPassPair(user, pass string) error {
+func (c *Client) AuthWithUserPassPair(user, pass string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -89,7 +89,7 @@ func (c *TcpClient) AuthWithUserPassPair(user, pass string) error {
 	}
 }
 
-func (c *TcpClient) Get(key string) (*msg_protocol.GetResponse, error) {
+func (c *Client) Get(key string) (*msg_protocol.GetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -132,7 +132,7 @@ func (c *TcpClient) Get(key string) (*msg_protocol.GetResponse, error) {
 	}
 }
 
-func (c *TcpClient) Set(key string, value string) (*msg_protocol.SetResponse, error) {
+func (c *Client) Set(key string, value string) (*msg_protocol.SetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
