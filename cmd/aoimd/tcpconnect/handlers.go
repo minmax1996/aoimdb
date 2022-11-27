@@ -125,6 +125,7 @@ func (c *Client) SetHandler(s ...string) error {
 	}
 
 	c.Write(&protocols.Response{
+		MessageType: protocols.MessageTypeSet,
 		SetResponse: &protocols.SetResponse{
 			Message: "ok",
 		},
@@ -166,6 +167,7 @@ func (c *Client) CreateTableHandler(s ...string) error {
 	}
 
 	c.Write(&protocols.Response{
+		MessageType: protocols.MessageTypeCreateTable,
 		CreateTableResponse: &protocols.CreateTableResponse{
 			Message: "ok",
 		},
@@ -201,6 +203,7 @@ func (c *Client) InsertIntoTableHandler(s ...string) error {
 		err := db.InsertIntoTable(selectedDatabase, tableName, columnNames, row)
 		if err != nil {
 			c.Write(&protocols.Response{
+				MessageType: protocols.MessageTypeInsertTable,
 				InsertTableResponse: &protocols.InsertTableResponse{
 					Message: err.Error(),
 				},
@@ -210,6 +213,7 @@ func (c *Client) InsertIntoTableHandler(s ...string) error {
 	}
 
 	c.Write(&protocols.Response{
+		MessageType: protocols.MessageTypeInsertTable,
 		InsertTableResponse: &protocols.InsertTableResponse{
 			Message: "ok",
 		},
@@ -239,9 +243,10 @@ func (c *Client) SelectFromTableHandler(s ...string) error {
 	}
 
 	c.Write(&protocols.Response{
+		MessageType: protocols.MessageTypeSelectTable,
 		SelectTableResponse: &protocols.SelectTableResponse{
 			FieldNames: table.ColumnNames,
-			//Rows:       table.DataRows, TODO
+			Rows:       table.DataRows.Export(),
 		},
 	})
 	return nil

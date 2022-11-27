@@ -20,7 +20,5 @@ type InsertTableResponse struct {
 
 type SelectTableResponse struct {
 	FieldNames []string
-	Rows       []Row
+	Rows       [][]string
 }
-
-type Row []interface{}

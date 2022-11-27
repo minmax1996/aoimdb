@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"net"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/minmax1996/aoimdb/api/commands"
 	"github.com/minmax1996/aoimdb/pkg/protocols"
-	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/term"
 )
 
@@ -126,8 +126,9 @@ func startListenResponses() {
 				os.Exit(1)
 			}
 
+			fmt.Println(data)
 			var item protocols.Response
-			err = msgpack.Unmarshal([]byte(data), &item)
+			err = json.Unmarshal([]byte(data), &item)
 			if err != nil {
 				fmt.Println("(error) ERR " + err.Error())
 				continue
@@ -140,21 +141,21 @@ func startListenResponses() {
 
 			switch item.MessageType {
 			case protocols.MessageTypeAuth:
-				fmt.Println(item.Message)
+				fmt.Println(item.AuthResponse)
 			case protocols.MessageTypeSelect:
-				fmt.Println(item.Message)
+				fmt.Println(item.SelectResponse)
 			case protocols.MessageTypeGet:
-				fmt.Println(item.Message)
+				fmt.Println(item.GetResponse)
 			case protocols.MessageTypeSet:
-				fmt.Println(item.Message)
+				fmt.Println(item.SetResponse)
 			case protocols.MessageTypeKeys:
-				fmt.Println(item.Message)
+				fmt.Println(item.KeysResponse)
 			case protocols.MessageTypeCreateTable:
-				fmt.Println(item.Message)
+				fmt.Println(item.CreateTableResponse)
 			case protocols.MessageTypeInsertTable:
-				fmt.Println(item.Message)
+				fmt.Println(item.InsertTableResponse)
 			case protocols.MessageTypeSelectTable:
-				fmt.Println(item.Message)
+				fmt.Println(item.SelectTableResponse)
 			default:
 				fmt.Println(item.Message)
 			}

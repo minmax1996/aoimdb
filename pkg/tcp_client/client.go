@@ -3,13 +3,13 @@ package tcp_client
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"errors"
 	"net"
 	"strings"
 	"time"
 
 	"github.com/minmax1996/aoimdb/pkg/protocols"
-	"github.com/vmihailenco/msgpack"
 )
 
 type Client struct {
@@ -66,7 +66,7 @@ func (c *Client) AuthWithUserPassPair(user, pass string) error {
 		}
 
 		var item protocols.Response
-		err = msgpack.Unmarshal([]byte(data), &item)
+		err = json.Unmarshal([]byte(data), &item)
 		if err != nil {
 			ch <- err
 			return
@@ -109,7 +109,7 @@ func (c *Client) Get(key string) (*protocols.GetResponse, error) {
 		}
 
 		var item protocols.Response
-		err = msgpack.Unmarshal([]byte(data), &item)
+		err = json.Unmarshal([]byte(data), &item)
 		if err != nil {
 			ch <- err
 			return
@@ -152,7 +152,7 @@ func (c *Client) Set(key string, value string) (*protocols.SetResponse, error) {
 		}
 
 		var item protocols.Response
-		err = msgpack.Unmarshal([]byte(data), &item)
+		err = json.Unmarshal([]byte(data), &item)
 		if err != nil {
 			ch <- err
 			return
