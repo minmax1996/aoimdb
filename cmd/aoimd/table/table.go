@@ -1,14 +1,12 @@
 package table
 
 import (
-	"bytes"
-	"encoding/gob"
 	"errors"
 	"fmt"
 	"reflect"
 	"sync"
 
-	"github.com/minmax1996/aoimdb/internal/aoimdb/datatypes"
+	"github.com/minmax1996/aoimdb/cmd/aoimd/datatypes"
 )
 
 type Rows []Row
@@ -43,48 +41,6 @@ type Table struct {
 	ColumnNames []string
 	ColumnTypes []datatypes.Datatype
 	DataRows    Rows
-}
-
-type exportTable struct {
-	Name        string
-	ColumnNames []string
-	ColumnTypes []string
-	DataRows    Rows
-}
-
-func (t *Table) MarshalBinary() ([]byte, error) {
-	export := exportTable{
-		Name:        t.Name,
-		ColumnNames: t.ColumnNames,
-		ColumnTypes: make([]string, 0, len(t.ColumnTypes)),
-		DataRows:    t.DataRows,
-	}
-	for _, v := range t.ColumnTypes {
-		export.ColumnTypes = append(export.ColumnTypes, v.ToString())
-	}
-
-	buf := bytes.Buffer{}
-	if err := gob.NewEncoder(&buf).Encode(export); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
-// UnmarshalBinary modifies the receiver so it must take a pointer receiver.
-func (t *Table) UnmarshalBinary(data []byte) error {
-	var export exportTable
-	if err := gob.NewDecoder(bytes.NewReader(data)).Decode(&export); err != nil {
-		return err
-	}
-	t.Name = export.Name
-	t.ColumnNames = export.ColumnNames
-	t.ColumnTypes = make([]datatypes.Datatype, 0, len(t.ColumnTypes))
-	t.DataRows = export.DataRows
-	for _, v := range export.ColumnTypes {
-		//TODO handle this later
-		t.ColumnTypes = append(t.ColumnTypes, *datatypes.FromString(v))
-	}
-	return nil
 }
 
 // NewTableSchema initialize new table scheam with no data

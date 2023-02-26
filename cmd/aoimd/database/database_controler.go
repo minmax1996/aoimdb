@@ -5,35 +5,35 @@ import (
 	"encoding/hex"
 	"errors"
 
-	"github.com/minmax1996/aoimdb/internal/aoimdb/datatypes"
-	"github.com/minmax1996/aoimdb/internal/aoimdb/setter"
-	"github.com/minmax1996/aoimdb/internal/aoimdb/table"
-	"github.com/minmax1996/aoimdb/pkg/filestorage"
-	"github.com/minmax1996/aoimdb/pkg/logger"
+	"github.com/minmax1996/aoimdb/cmd/aoimd/datatypes"
+	"github.com/minmax1996/aoimdb/cmd/aoimd/setter"
+	"github.com/minmax1996/aoimdb/cmd/aoimd/table"
+	"github.com/minmax1996/aoimdb/internal/pkg/filestorage"
+	"github.com/minmax1996/aoimdb/internal/pkg/logger"
 )
 
-//databaseInstance to easy access to database from any part of program
+// databaseInstance to easy access to database from any part of program
 var databaseInstance *DatabaseController
 
 // DatabaseController Database structure
 type DatabaseController struct {
 	Databases    map[string]*Database
-	users        setter.Setter
-	accessTokens setter.Setter
+	Users        setter.Setter
+	AccessTokens setter.Setter
 }
 
 // NewDatabaseController database constructir
 func NewDatabaseController() *DatabaseController {
 	dbc := &DatabaseController{
 		Databases:    make(map[string]*Database),
-		users:        setter.NewSet(),
-		accessTokens: setter.NewSet(),
+		Users:        setter.NewSet(),
+		AccessTokens: setter.NewSet(),
 	}
 
 	return dbc
 }
 
-//InitDatabaseController uses to restore data from backup if exists or create new database
+// InitDatabaseController uses to restore data from backup if exists or create new database
 func InitDatabaseController() {
 	databaseInstance = NewDatabaseController()
 	if err := filestorage.RestoreFromBackup(databaseInstance); err != nil {
@@ -44,9 +44,9 @@ func InitDatabaseController() {
 	filestorage.StartBackups(databaseInstance, 30)
 }
 
-//AuthentificateByUserPass v
+// AuthentificateByUserPass v
 func AuthentificateByUserPass(user, pass string) error {
-	val, err := databaseInstance.users.Get(user)
+	val, err := databaseInstance.Users.Get(user)
 	if err != nil {
 		return err
 	}
@@ -58,15 +58,15 @@ func AuthentificateByUserPass(user, pass string) error {
 	return nil
 }
 
-//AuthentificateByToken
+// AuthentificateByToken
 func AuthentificateByToken(token string) error {
-	_, err := databaseInstance.accessTokens.Get(token)
+	_, err := databaseInstance.AccessTokens.Get(token)
 	return err
 }
 
-//AddUser AddUser to auth with
+// AddUser AddUser to auth with
 func AddUser(user, pass string) error {
-	if err := databaseInstance.users.Set(user, pass); err != nil {
+	if err := databaseInstance.Users.Set(user, pass); err != nil {
 		return err
 	}
 	hasher := md5.New()
@@ -74,7 +74,7 @@ func AddUser(user, pass string) error {
 	hasher.Write([]byte(pass))
 	accessToken := hex.EncodeToString(hasher.Sum(nil))
 	logger.Info(accessToken)
-	return databaseInstance.accessTokens.Set(accessToken, user)
+	return databaseInstance.AccessTokens.Set(accessToken, user)
 }
 
 // SelectDatabase checks if database exists and create it if not

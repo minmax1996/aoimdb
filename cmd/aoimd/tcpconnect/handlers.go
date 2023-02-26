@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"github.com/minmax1996/aoimdb/api/commands"
-	db "github.com/minmax1996/aoimdb/internal/aoimdb/database"
-	"github.com/minmax1996/aoimdb/internal/aoimdb/datatypes"
-	"github.com/minmax1996/aoimdb/pkg/logger"
-	"github.com/minmax1996/aoimdb/pkg/protocols"
+	"github.com/minmax1996/aoimdb/api/protocols"
+	db "github.com/minmax1996/aoimdb/cmd/aoimd/database"
+	"github.com/minmax1996/aoimdb/cmd/aoimd/datatypes"
+	"github.com/minmax1996/aoimdb/internal/pkg/logger"
 )
 
 // Handle sends messages to client and return return

@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	dt "github.com/minmax1996/aoimdb/internal/aoimdb/datatypes"
-	"github.com/minmax1996/aoimdb/internal/aoimdb/table"
+	dt "github.com/minmax1996/aoimdb/cmd/aoimd/datatypes"
+	"github.com/minmax1996/aoimdb/cmd/aoimd/table"
 )
 
 func TestTable_Select(t *testing.T) {

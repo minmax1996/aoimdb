@@ -4,10 +4,10 @@ import (
 	"net"
 
 	"github.com/minmax1996/aoimdb/api/commands"
-	"github.com/minmax1996/aoimdb/pkg/logger"
+	"github.com/minmax1996/aoimdb/internal/pkg/logger"
 )
 
-//TCPServer struct
+// TCPServer struct
 type TCPServer struct {
 	clients    []*Client
 	connect    chan net.Conn

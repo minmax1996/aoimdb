@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/minmax1996/aoimdb/internal/aoimdb/hsetter"
-	"github.com/minmax1996/aoimdb/internal/aoimdb/setter"
-	"github.com/minmax1996/aoimdb/internal/aoimdb/table"
+	"github.com/minmax1996/aoimdb/cmd/aoimd/hsetter"
+	"github.com/minmax1996/aoimdb/cmd/aoimd/setter"
+	"github.com/minmax1996/aoimdb/cmd/aoimd/table"
 )
 
-//Database Database structure
+// Database Database structure
 type Database struct {
 	Name   string
 	Sets   setter.Setter
@@ -48,22 +48,22 @@ func (db *Database) Keys(keysPattern string) []string {
 	return result
 }
 
-//Get Get
+// Get Get
 func (db *Database) Get(key string) (interface{}, error) {
 	return db.Sets.Get(key)
 }
 
-//Set Set
+// Set Set
 func (db *Database) Set(key string, value interface{}) error {
 	return db.Sets.Set(key, value)
 }
 
-//HSet HSet
+// HSet HSet
 func (db *Database) HSet(key string) (interface{}, error) {
 	return db.Sets.Get(key)
 }
 
-//HGet HGet
+// HGet HGet
 func (db *Database) HGet(key string, value interface{}) error {
 	return db.Sets.Set(key, value)
 }

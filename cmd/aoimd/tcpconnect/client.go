@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/minmax1996/aoimdb/api/commands"
-	"github.com/minmax1996/aoimdb/pkg/logger"
-	"github.com/minmax1996/aoimdb/pkg/protocols"
+	"github.com/minmax1996/aoimdb/api/protocols"
+	"github.com/minmax1996/aoimdb/internal/pkg/logger"
 )
 
 // Client struct

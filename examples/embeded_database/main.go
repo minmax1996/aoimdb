@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strconv"
 
-	aoimdb "github.com/minmax1996/aoimdb/internal/aoimdb/database"
-	"github.com/minmax1996/aoimdb/internal/aoimdb/datatypes"
-	"github.com/minmax1996/aoimdb/internal/aoimdb/table"
+	aoimdb "github.com/minmax1996/aoimdb/cmd/aoimd/database"
+	"github.com/minmax1996/aoimdb/cmd/aoimd/datatypes"
+	"github.com/minmax1996/aoimdb/cmd/aoimd/table"
 )
 
 func main() {

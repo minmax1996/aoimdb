@@ -11,7 +11,7 @@ import (
 	"syscall"
 
 	"github.com/minmax1996/aoimdb/api/commands"
-	"github.com/minmax1996/aoimdb/pkg/protocols"
+	"github.com/minmax1996/aoimdb/api/protocols"
 	"golang.org/x/term"
 )
 
@@ -159,17 +159,6 @@ func startListenResponses() {
 			default:
 				fmt.Println(item.Message)
 			}
-
-			// if strings.HasPrefix(item.Message, "csv>") {
-			// 	table, err := tablewriter.NewCSVReader(os.Stdout, csv.NewReader(strings.NewReader(strings.Replace(item.Message, "csv>", "", 1))), false)
-			// 	if err != nil {
-			// 		logger.Error(err.Error())
-			// 		continue
-			// 	}
-			// 	table.Render()
-			// } else {
-			// 	fmt.Print("< " + item.Message)
-			// }
 		}
 	}()
 }

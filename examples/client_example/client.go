@@ -1,4 +1,4 @@
-package tcp_client
+package main
 
 import (
 	"bufio"
@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/minmax1996/aoimdb/pkg/protocols"
+	"github.com/minmax1996/aoimdb/api/protocols"
 )
 
 type Client struct {

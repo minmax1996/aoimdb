@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/minmax1996/aoimdb/cmd/aoimd/database"
 	"github.com/minmax1996/aoimdb/cmd/aoimd/tcpconnect"
-	"github.com/minmax1996/aoimdb/internal/aoimdb/database"
-	"github.com/minmax1996/aoimdb/pkg/logger"
+	"github.com/minmax1996/aoimdb/internal/pkg/logger"
 )
 
 func init() {
