@@ -3,9 +3,7 @@ package main
 import (
 	"flag"
 	"net"
-	"net/http"
 
-	"github.com/gorilla/mux"
 	"github.com/minmax1996/aoimdb/cmd/aoimd/database"
 	"github.com/minmax1996/aoimdb/cmd/aoimd/tcpconnect"
 	"github.com/minmax1996/aoimdb/internal/pkg/logger"
@@ -23,12 +21,7 @@ const (
 	httpProxyPort = ":8081"
 )
 
-var (
-	assetsPath = "./ui/build"
-)
-
 func parseFlags() {
-	flag.StringVar(&assetsPath, "assets_path", "./ui/build", "a string var for username")
 	flag.Parse()
 }
 
@@ -56,29 +49,11 @@ func startListenForTCPConnects(errChan chan error) error {
 	return nil
 }
 
-func startWebUI(errChan chan error) error {
-	r := mux.NewRouter()
-	r.Handle("/", http.FileServer(http.Dir(assetsPath)))
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(assetsPath+"/static/"))))
-	go func() {
-		if err := http.ListenAndServe(":3000", r); err != nil {
-			errChan <- err
-		}
-	}()
-	return nil
-}
-
 func main() {
 	// main error chan
 	errChan := make(chan error)
-	logger.Info("This is EntryPoint for database service")
 
 	if err := startListenForTCPConnects(errChan); err != nil {
-		logger.Fatal(err)
-		return
-	}
-
-	if err := startWebUI(errChan); err != nil {
 		logger.Fatal(err)
 		return
 	}
